@@ -223,7 +223,7 @@ public class ArcadeCar : MonoBehaviour
     RaycastHit[] wheelRayHits = new RaycastHit[4];
 
 
-    void Reset(Vector3 position)
+    void Teleport(Vector3 position)
     {
         position += new Vector3(UnityEngine.Random.Range(-1.0f, 1.0f), 0.0f, UnityEngine.Random.Range(-1.0f, 1.0f));
         float yaw = transform.eulerAngles.y + UnityEngine.Random.Range(-10.0f, 10.0f);
@@ -234,18 +234,14 @@ public class ArcadeCar : MonoBehaviour
         rb.angularVelocity = new Vector3(0f, 0f, 0f);
 
         for (int axleIndex = 0; axleIndex < axles.Length; axleIndex++)
-        {
             axles[axleIndex].steerAngle = 0.0f;
-        }
-
-        Debug.Log(string.Format("Reset {0}, {1}, {2}, Rot {3}", position.x, position.y, position.z, yaw));
     }
 
     void Start()
     {
         style.normal.textColor = Color.red;
-
-        rb = GetComponent<Rigidbody>();
+        
+        TryGetComponent(out rb);
         rb.centerOfMass = centerOfMass;
     }
 
@@ -253,9 +249,7 @@ public class ArcadeCar : MonoBehaviour
     {
         //HACK: to apply steering in editor
         if (rb == null)
-        {
-            rb = GetComponent<Rigidbody>();
-        }
+            TryGetComponent(out rb);
 
         ApplyVisual();
         CalculateAckermannSteering();
@@ -269,53 +263,30 @@ public class ArcadeCar : MonoBehaviour
         return x;
     }
 
-    static float SimpleAccelerationCurve(float topSpeed, float accel, float time, float x)
+    // given a time, returns a desired speed
+    static float SimpleAccelerationCurve(float topSpeed, float accel, float time, float t)
     {
-        return topSpeed * MathF.Pow(Mathf.Sin(Mathf.Clamp01(x / time) * Mathf.PI / 2f), accel);
+        return topSpeed * MathF.Pow(MathF.Sin(Mathf.Clamp01(t / time) * MathF.PI / 2f), accel);
+    }
+
+    // given a speed, returns the corresponding time on the speed curve
+    static float SimpleAccelerationCurveInverted(float topSpeed, float accel, float time, float s)
+    {
+        return MathF.Asin(MathF.Pow(Mathf.Clamp01(s / topSpeed), 1 / accel)) * time * 2f / Mathf.PI;
     }
 
     float GetAccelerationForceMagnitude(float topSpeed, float accelerationFactor, float accelerationTime, float speedMetersPerSec, float dt)
     {
         float speedKmH = speedMetersPerSec * 3.6f;
-        float desiredSpeed;
 
         float mass = rb.mass;
 
-        float step = accelerationTime / 2f;
-
-        float timeNow = 0f;
-
-        // Only actually do time for speed search if we're below our max speed
-        if (speedKmH < topSpeed)
-        {
-            for (int i = 0; i < 10; i++)
-            {
-                float cur_speed = SimpleAccelerationCurve(topSpeed, accelerationFactor, accelerationTime, timeNow);
-                float cur_speed_diff = Math.Abs(speedKmH - cur_speed);
-
-                float stepTime = timeNow + step;
-                float step_speed = SimpleAccelerationCurve(topSpeed, accelerationFactor, accelerationTime, stepTime);
-                float step_speed_diff = Math.Abs(speedKmH - step_speed);
-
-                if (step_speed_diff < cur_speed_diff)
-                {
-                    timeNow = stepTime;
-                    cur_speed = step_speed;
-                }
-
-                step = Math.Abs(step / 2) * Mathf.Sign(speedKmH - cur_speed);
-            }
-            desiredSpeed = SimpleAccelerationCurve(topSpeed, accelerationFactor, accelerationTime, timeNow + dt);
-        }
-        else
-        {
-            desiredSpeed = topSpeed;
-        }
-
+        float time = SimpleAccelerationCurveInverted(topSpeed, accelerationFactor, accelerationTime, speedKmH);
+        float desiredSpeed = SimpleAccelerationCurve(topSpeed, accelerationFactor, accelerationTime, time + dt);
+        desiredSpeed = Mathf.Clamp(desiredSpeed, 0f, topSpeed);
         float acceleration = desiredSpeed - speedKmH;
         
-        //to meters per sec
-        acceleration /= 3.6f;
+        acceleration /= 3.6f; //to meters per sec
         float intensity = acceleration * mass;
         intensity = Mathf.Max(intensity, 0.0f);
         return intensity;
@@ -332,27 +303,18 @@ public class ArcadeCar : MonoBehaviour
         return speed;
     }
 
-    //TODO: Refactor (remove this func, GetAccelerationForceMagnitude is enough)
     float CalcAccelerationForceMagnitude()
     {
         if (!isAcceleration && !isReverseAcceleration)
-        {
             return 0.0f;
-        }
 
         float speed = GetSpeed();
         float dt = Time.fixedDeltaTime;
 
         if (isAcceleration)
-        {
-            float forceMag = GetAccelerationForceMagnitude(ForwardTopSpeed, ForwardAccelerationFactor, ForwardAccelerationTime, speed, dt);
-            return forceMag;
-        }
+            return GetAccelerationForceMagnitude(ForwardTopSpeed, ForwardAccelerationFactor, ForwardAccelerationTime, speed, dt);
         else
-        {
-            float forceMag = GetAccelerationForceMagnitude(ReverseTopSpeed, ReverseAccelerationFactor, ReverseAccelerationTime, -speed, dt);
-            return -forceMag;
-        }
+            return -GetAccelerationForceMagnitude(ReverseTopSpeed, ReverseAccelerationFactor, ReverseAccelerationTime, -speed, dt);
     }
 
     [Range(0, 1)] public float SteeringDeadzone = 0.01f;
@@ -428,12 +390,12 @@ public class ArcadeCar : MonoBehaviour
                 // -4 meters from surface
                 nearestDistance -= 4.0f;
                 Vector3 resetPos = resetRay.origin + resetRay.direction * nearestDistance;
-                Reset(resetPos);
+                Teleport(resetPos);
             }
             else
             {
                 // Hard reset
-                Reset(new Vector3(-69.48f, 5.25f, 132.71f));
+                Teleport(new Vector3(-69.48f, 5.25f, 132.71f));
             }
         }
 
@@ -505,33 +467,21 @@ public class ArcadeCar : MonoBehaviour
 
         int numberOfPoweredWheels = 0;
         for (int axleIndex = 0; axleIndex < axles.Length; axleIndex++)
-        {
             if (axles[axleIndex].isPowered)
-            {
                 numberOfPoweredWheels += 2;
-            }
-        }
-
 
         int totalWheelsCount = axles.Length * 2;
         for (int axleIndex = 0; axleIndex < axles.Length; axleIndex++)
-        {
             CalculateAxleForces(axles[axleIndex], totalWheelsCount, numberOfPoweredWheels);
-        }
 
         bool inAir = AreAllWheelsInAir();
 
         if (inAir)
-        {
-            KeepUpwardsInAir();
-        }
+            KeepUpwards();
         else
-        {
             Downforce();
-        }
 
         AdvanceSlipperyTimes();
-
     }
 
     private bool AreAllWheelsInAir()
@@ -579,7 +529,7 @@ public class ArcadeCar : MonoBehaviour
         }
     }
 
-    private void KeepUpwardsInAir()
+    private void KeepUpwards()
     {
 
         // set after flight tire slippery time (1 sec)
