@@ -325,25 +325,12 @@ public class ArcadeCar : MonoBehaviour
             if (Input.GetKey(KeyCode.R)) 
                 ResetToValidPosition();
             isHandBrakeNow = Input.GetKey(KeyCode.Space);
+            isBrakeNow = Input.GetKey(KeyCode.RightControl);
         }
 
         float speed = GetSpeed();
-        isAcceleration = false;
-        isReverseAcceleration = false;
-        if (v > 0.4f)
-        {
-            if (speed < -0.5f)
-                isBrakeNow = true;
-            else
-                isAcceleration = true;
-        }
-        else if (v < -0.4f)
-        {
-            if (speed > 0.5f)
-                isBrakeNow = true;
-            else
-                isReverseAcceleration = true;
-        }
+        isAcceleration = v > 0.4f && speed > -0.5f;
+        isReverseAcceleration = v < -0.4f && speed < 0.5f;
 
         // Make tires more slippery (for 1 seconds) when player hit brakes
         if (isBrakeNow == true && isBrake == false)
@@ -718,20 +705,15 @@ public class ArcadeCar : MonoBehaviour
         Vector3 c_fwd = Vector3.Cross(c_up, c_left);
 
         // Calculate sliding velocity (velocity without normal force)
-        Vector3 lvel = Vector3.Dot(wheelVelocity, c_left) * c_left;
-        Vector3 fvel = Vector3.Dot(wheelVelocity, c_fwd) * c_fwd;
-        Vector3 slideVelocity = (lvel + fvel) * 0.5f;
+        Vector3 slideVelocity = Vector3.ProjectOnPlane(wheelVelocity, c_up);
 
         // Calculate current sliding force
-        Vector3 slidingForce = (slideVelocity * rb.mass / dt) / (float)totalWheelsCount;
+        Vector3 slidingForce = rb.mass / dt / totalWheelsCount * slideVelocity;
 
         if (debugDraw)
-        {
             Debug.DrawRay(wheelData.touchPoint.point, slideVelocity, Color.red);
-        }
 
-        float laterialFriction = Mathf.Clamp01(axle.laterialFriction);
-
+        float lateralFriction = Mathf.Clamp01(axle.laterialFriction);
 
         float slipperyK = 1.0f;
 
@@ -755,10 +737,10 @@ public class ArcadeCar : MonoBehaviour
             slipperyK = Mathf.Min(slipperyK, slippery);
         }
 
-        laterialFriction *= slipperyK;
+        lateralFriction *= slipperyK;
 
         // Simulate perfect static friction
-        Vector3 frictionForce = -slidingForce * laterialFriction;
+        Vector3 frictionForce = slidingForce * -lateralFriction;
 
         // Remove friction along roll-direction of wheel 
         Vector3 longitudinalForce = Vector3.Dot(frictionForce, c_fwd) * c_fwd;
@@ -766,8 +748,9 @@ public class ArcadeCar : MonoBehaviour
         // Apply braking force or rolling resistance force or nothing
         if (isBrake || isHandBrake)
         {
-            float clampedMag = Mathf.Clamp(axle.brakeForceMag * rb.mass, 0.0f, longitudinalForce.magnitude);
-            Vector3 brakeForce = longitudinalForce.normalized * clampedMag;
+            float mag = longitudinalForce.magnitude;
+            float clampedMag = Mathf.Clamp(axle.brakeForceMag * rb.mass, 0.0f, mag);
+            float brakeForce = clampedMag / mag;
 
             if (isHandBrake)
             {
@@ -775,17 +758,13 @@ public class ArcadeCar : MonoBehaviour
                 brakeForce *= 0.8f;
             }
 
-            longitudinalForce -= brakeForce;
+            longitudinalForce *= 1f - brakeForce;
         }
-        else
+        else if (!isAcceleration && !isReverseAcceleration)
         {
-
-            // Apply rolling-friction (automatic slow-down) only if player don't press to the accelerator
-            if (!isAcceleration && !isReverseAcceleration)
-            {
-                float rollingK = 1.0f - Mathf.Clamp01(axle.rollingFriction);
-                longitudinalForce *= rollingK;
-            }
+            // Apply rolling-friction (automatic slow-down) only if player don't press the accelerator
+            float rollingK = 1.0f - Mathf.Clamp01(axle.rollingFriction);
+            longitudinalForce *= rollingK;
         }
 
         frictionForce -= longitudinalForce;
@@ -799,9 +778,8 @@ public class ArcadeCar : MonoBehaviour
         // Apply resulting force
         AddForceAtPosition(frictionForce, wheelData.touchPoint.point);
 
-
         // Engine force
-        if (!isBrake && axle.isPowered && Mathf.Abs(accelerationForceMagnitude) > 0.01f)
+        if (axle.isPowered && Mathf.Abs(accelerationForceMagnitude) > 0.01f)
         {
             Vector3 accForcePoint = wheelData.touchPoint.point - (wsDownDirection * 0.2f);
             Vector3 engineForce = c_fwd * accelerationForceMagnitude / numberOfPoweredWheels / dt;
@@ -897,7 +875,6 @@ public class ArcadeCar : MonoBehaviour
         frontAxle.wheelDataR.yawRad = steerAngleRight;
     }
 
-
     void CalculateWheelVisualTransform(Vector3 wsAttachPoint, Vector3 wsDownDirection, Axle axle, WheelData data, int wheelIndex, float visualRotationRad, out Vector3 pos, out Quaternion rot)
     {
         float suspCurrentLen = Mathf.Clamp01(1.0f - data.compression) * axle.lengthRelaxed;
@@ -965,27 +942,21 @@ public class ArcadeCar : MonoBehaviour
             if (axle.wheelVisualLeft != null)
             {
                 CalculateWheelVisualTransform(wsL, wsDownDirection, axle, axle.wheelDataL, WHEEL_LEFT_INDEX, axle.wheelDataL.visualRotationRad, out wsPos, out wsRot);
-                axle.wheelVisualLeft.transform.position = wsPos;
-                axle.wheelVisualLeft.transform.rotation = wsRot;
-                axle.wheelVisualLeft.transform.localScale = new Vector3(axle.radius, axle.radius, axle.radius) * axle.visualScale;
+                axle.wheelVisualLeft.transform.SetPositionAndRotation(wsPos, wsRot);
+                axle.wheelVisualLeft.transform.localScale
+                    = new Vector3(axle.radius, axle.radius, axle.radius) * axle.visualScale;
 
-                if (!isBrake)
-                {
-                    CalculateWheelRotationFromSpeed(axle, axle.wheelDataL, wsPos);
-                }
+                CalculateWheelRotationFromSpeed(axle, axle.wheelDataL, wsPos);
             }
 
             if (axle.wheelVisualRight != null)
             {
                 CalculateWheelVisualTransform(wsR, wsDownDirection, axle, axle.wheelDataR, WHEEL_RIGHT_INDEX, axle.wheelDataR.visualRotationRad, out wsPos, out wsRot);
-                axle.wheelVisualRight.transform.position = wsPos;
-                axle.wheelVisualRight.transform.rotation = wsRot;
-                axle.wheelVisualRight.transform.localScale = new Vector3(axle.radius, axle.radius, axle.radius) * axle.visualScale;
+                axle.wheelVisualRight.transform.SetPositionAndRotation(wsPos, wsRot);
+                axle.wheelVisualRight.transform.localScale
+                    = new Vector3(axle.radius, axle.radius, axle.radius) * axle.visualScale;
 
-                if (!isBrake)
-                {
-                    CalculateWheelRotationFromSpeed(axle, axle.wheelDataR, wsPos);
-                }
+                CalculateWheelRotationFromSpeed(axle, axle.wheelDataR, wsPos);
             }
         }
     }
