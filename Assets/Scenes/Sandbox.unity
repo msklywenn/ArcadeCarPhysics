@@ -4423,6 +4423,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 902423378}
     m_Modifications:
+    - target: {fileID: 100000, guid: 5567b36b539381640958ccd34e067824, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 5567b36b539381640958ccd34e067824, type: 3}
       propertyPath: m_RootOrder
       value: 1
@@ -8617,7 +8621,7 @@ GameObject:
   - component: {fileID: 329858646}
   - component: {fileID: 329858645}
   m_Layer: 0
-  m_Name: Car (1)
+  m_Name: Car
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8635,6 +8639,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58fd1be0c9a83a3448a7f2dc7cf589d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  CollisionLayers:
+    serializedVersion: 2
+    m_Bits: 1
   centerOfMass: {x: 0, y: -0.38, z: 0.38}
   accelerationCurve:
     serializedVersion: 2
@@ -8685,6 +8692,8 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   reverseEvaluationAccuracy: 25
+  steeringSpeed: 60
+  steeringResetSpeed: 50
   steerAngleLimit:
     serializedVersion: 2
     m_Curve:
@@ -8705,72 +8714,6 @@ MonoBehaviour:
       tangentMode: 0
       weightedMode: 0
       inWeight: 0.1172876
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  steeringResetSpeed:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0.8945923
-      value: 50.282104
-      inSlope: 0.039620772
-      outSlope: 0.039620772
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.10829674
-    - serializedVersion: 3
-      time: 99.79596
-      value: 54.96643
-      inSlope: -0.01015079
-      outSlope: -0.01015079
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.12491761
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  steeringSpeed:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 6
-      inSlope: -0.4193606
-      outSlope: -0.4193606
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.010936174
-    - serializedVersion: 3
-      time: 6.8692474
-      value: 2.9183295
-      inSlope: -0.111321695
-      outSlope: -0.111321695
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.43607616
-      outWeight: 0.021040527
-    - serializedVersion: 3
-      time: 35.626457
-      value: 1.3433164
-      inSlope: -0.028252108
-      outSlope: -0.028252108
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.089595065
-    - serializedVersion: 3
-      time: 99.76825
-      value: 0.38061523
-      inSlope: -0.0060552335
-      outSlope: -0.0060552335
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.15430501
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -8856,6 +8799,7 @@ MonoBehaviour:
     afterFlightSlipperyK: 0.02
     brakeSlipperyK: 0.5
     handBrakeSlipperyK: 0.2
+  SteeringDeadzone: 0.01
 --- !u!54 &329858646
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -8922,7 +8866,7 @@ Transform:
   - {fileID: 1707946543}
   - {fileID: 323152134}
   - {fileID: 1709232756}
-  m_Father: {fileID: 1122541888}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 94.27801, z: 0}
 --- !u!1 &331605608
 GameObject:
@@ -10272,6 +10216,10 @@ PrefabInstance:
     - target: {fileID: 100000, guid: 5567b36b539381640958ccd34e067824, type: 3}
       propertyPath: m_Name
       value: CarWheel02
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: 5567b36b539381640958ccd34e067824, type: 3}
+      propertyPath: m_Layer
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 5567b36b539381640958ccd34e067824, type: 3}
       propertyPath: m_RootOrder
@@ -12029,7 +11977,7 @@ GameObject:
   - component: {fileID: 446176122}
   - component: {fileID: 446176121}
   m_Layer: 0
-  m_Name: Car (2)
+  m_Name: Car
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -12047,6 +11995,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58fd1be0c9a83a3448a7f2dc7cf589d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  CollisionLayers:
+    serializedVersion: 2
+    m_Bits: 1
   centerOfMass: {x: 0, y: -0.38, z: 0.38}
   accelerationCurve:
     serializedVersion: 2
@@ -12097,6 +12048,8 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   reverseEvaluationAccuracy: 25
+  steeringSpeed: 60
+  steeringResetSpeed: 50
   steerAngleLimit:
     serializedVersion: 2
     m_Curve:
@@ -12117,72 +12070,6 @@ MonoBehaviour:
       tangentMode: 0
       weightedMode: 0
       inWeight: 0.1172876
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  steeringResetSpeed:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0.8945923
-      value: 50.282104
-      inSlope: 0.039620772
-      outSlope: 0.039620772
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.10829674
-    - serializedVersion: 3
-      time: 99.79596
-      value: 54.96643
-      inSlope: -0.01015079
-      outSlope: -0.01015079
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.12491761
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  steeringSpeed:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 6
-      inSlope: -0.4193606
-      outSlope: -0.4193606
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.010936174
-    - serializedVersion: 3
-      time: 6.8692474
-      value: 2.9183295
-      inSlope: -0.111321695
-      outSlope: -0.111321695
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.43607616
-      outWeight: 0.021040527
-    - serializedVersion: 3
-      time: 35.626457
-      value: 1.3433164
-      inSlope: -0.028252108
-      outSlope: -0.028252108
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.089595065
-    - serializedVersion: 3
-      time: 99.76825
-      value: 0.38061523
-      inSlope: -0.0060552335
-      outSlope: -0.0060552335
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.15430501
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -12268,6 +12155,7 @@ MonoBehaviour:
     afterFlightSlipperyK: 0.02
     brakeSlipperyK: 0.5
     handBrakeSlipperyK: 0.2
+  SteeringDeadzone: 0.01
 --- !u!54 &446176122
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -12334,7 +12222,7 @@ Transform:
   - {fileID: 1275503477}
   - {fileID: 732874860}
   - {fileID: 129392148}
-  m_Father: {fileID: 1122541888}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 94.27801, z: 0}
 --- !u!1 &451255756
 GameObject:
@@ -14055,6 +13943,10 @@ PrefabInstance:
     - target: {fileID: 100000, guid: 5567b36b539381640958ccd34e067824, type: 3}
       propertyPath: m_Name
       value: CarWheel03
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: 5567b36b539381640958ccd34e067824, type: 3}
+      propertyPath: m_Layer
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 5567b36b539381640958ccd34e067824, type: 3}
       propertyPath: m_RootOrder
@@ -19730,6 +19622,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 902423378}
     m_Modifications:
+    - target: {fileID: 100000, guid: eda2ad811165b5e49af9a4e8ca88cc4b, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 100002, guid: eda2ad811165b5e49af9a4e8ca88cc4b, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 100004, guid: eda2ad811165b5e49af9a4e8ca88cc4b, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 100006, guid: eda2ad811165b5e49af9a4e8ca88cc4b, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 100008, guid: eda2ad811165b5e49af9a4e8ca88cc4b, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: eda2ad811165b5e49af9a4e8ca88cc4b, type: 3}
       propertyPath: m_RootOrder
       value: 0
@@ -27351,8 +27263,8 @@ GameObject:
   - component: {fileID: 902423377}
   - component: {fileID: 902423376}
   - component: {fileID: 902423379}
-  m_Layer: 0
-  m_Name: Car
+  m_Layer: 6
+  m_Name: PlayerCar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -27438,6 +27350,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58fd1be0c9a83a3448a7f2dc7cf589d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  CollisionLayers:
+    serializedVersion: 2
+    m_Bits: 1
   centerOfMass: {x: 0, y: -0.38, z: 0.38}
   accelerationCurve:
     serializedVersion: 2
@@ -27452,8 +27367,8 @@ MonoBehaviour:
       inWeight: 0
       outWeight: 0.037268084
     - serializedVersion: 3
-      time: 10.8015995
-      value: 178.6633
+      time: 6
+      value: 130
       inSlope: 0.15185316
       outSlope: 0.15185316
       tangentMode: 0
@@ -27488,6 +27403,8 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   reverseEvaluationAccuracy: 25
+  steeringSpeed: 60
+  steeringResetSpeed: 50
   steerAngleLimit:
     serializedVersion: 2
     m_Curve:
@@ -27508,72 +27425,6 @@ MonoBehaviour:
       tangentMode: 0
       weightedMode: 0
       inWeight: 0.1172876
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  steeringResetSpeed:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0.8945923
-      value: 50.282104
-      inSlope: 0.039620772
-      outSlope: 0.039620772
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.10829674
-    - serializedVersion: 3
-      time: 99.79596
-      value: 54.96643
-      inSlope: -0.01015079
-      outSlope: -0.01015079
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.12491761
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  steeringSpeed:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 6
-      inSlope: -0.4193606
-      outSlope: -0.4193606
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.010936174
-    - serializedVersion: 3
-      time: 6.8692474
-      value: 2.9183295
-      inSlope: -0.111321695
-      outSlope: -0.111321695
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.43607616
-      outWeight: 0.021040527
-    - serializedVersion: 3
-      time: 35.626457
-      value: 1.3433164
-      inSlope: -0.028252108
-      outSlope: -0.028252108
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.089595065
-    - serializedVersion: 3
-      time: 99.76825
-      value: 0.38061523
-      inSlope: -0.0060552335
-      outSlope: -0.0060552335
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.15430501
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -27659,6 +27510,7 @@ MonoBehaviour:
     afterFlightSlipperyK: 0.02
     brakeSlipperyK: 0.5
     handBrakeSlipperyK: 0.1
+  SteeringDeadzone: 0.01
 --- !u!1 &904532266 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 100000, guid: b336add24760dc44cb3ded985727ab20,
@@ -31355,6 +31207,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CarWheel04
       objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: 5567b36b539381640958ccd34e067824, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 5567b36b539381640958ccd34e067824, type: 3}
       propertyPath: m_RootOrder
       value: 4
@@ -33302,9 +33158,6 @@ Transform:
   - {fileID: 827415234}
   - {fileID: 209847696}
   - {fileID: 435884548}
-  - {fileID: 1382140379}
-  - {fileID: 329858648}
-  - {fileID: 446176124}
   - {fileID: 1833144778}
   - {fileID: 939829844}
   - {fileID: 1329520375}
@@ -41073,7 +40926,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1122541888}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1385808357
 GameObject:
@@ -64015,7 +63868,10 @@ SceneRoots:
   m_Roots:
   - {fileID: 534669905}
   - {fileID: 170076735}
-  - {fileID: 902423378}
   - {fileID: 827935061}
+  - {fileID: 1382140379}
+  - {fileID: 902423378}
+  - {fileID: 329858648}
+  - {fileID: 446176124}
   - {fileID: 1122541888}
   - {fileID: 1190520221}

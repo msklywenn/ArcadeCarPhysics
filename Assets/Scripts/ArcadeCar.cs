@@ -6,7 +6,7 @@ using System.Collections;
 
 public class ArcadeCar : MonoBehaviour
 {
-
+    public LayerMask CollisionLayers;
 
     const int WHEEL_LEFT_INDEX = 0;
     const int WHEEL_RIGHT_INDEX = 1;
@@ -224,7 +224,7 @@ public class ArcadeCar : MonoBehaviour
 
     // For alloc-free raycasts
     Ray wheelRay = new Ray();
-    RaycastHit[] wheelRayHits = new RaycastHit[16];
+    RaycastHit[] wheelRayHits = new RaycastHit[4];
 
 
     void Reset(Vector3 position)
@@ -779,48 +779,22 @@ public class ArcadeCar : MonoBehaviour
     }
 #endif
 
-    bool RayCast(Ray ray, float maxDistance, ref RaycastHit nearestHit)
+    bool RayCast(in Ray ray, float maxDistance, ref RaycastHit nearestHit)
     {
-        int numHits = Physics.RaycastNonAlloc(wheelRay, wheelRayHits, maxDistance);
-        if (numHits == 0)
-        {
+        int numHits = Physics.RaycastNonAlloc(ray, wheelRayHits, maxDistance, CollisionLayers, QueryTriggerInteraction.Ignore);
+        if (numHits <= 0)
             return false;
-        }
-
-        // Find the nearest hit point and filter invalid hits
-        ////////////////////////////////////////////////////////////////////////////////////////
-
-        nearestHit.distance = float.MaxValue;
-        for (int j = 0; j < numHits; j++)
+        bool hasHit = false;
+        for (int i = 0; i < numHits; i++)
         {
-            if (wheelRayHits[j].collider != null && wheelRayHits[j].collider.isTrigger)
+            if (wheelRayHits[i].normal.y > 0.6f && (!hasHit || nearestHit.distance > wheelRayHits[i].distance))
             {
-                // skip triggers
-                continue;
-            }
-
-            // Skip contacts with car body
-            if (wheelRayHits[j].rigidbody == rb)
-            {
-                continue;
-            }
-
-            // Skip contacts with strange normals (walls?)
-            if (Vector3.Dot(wheelRayHits[j].normal, new Vector3(0.0f, 1.0f, 0.0f)) < 0.6f)
-            {
-                continue;
-            }
-
-            if (wheelRayHits[j].distance < nearestHit.distance)
-            {
-                nearestHit = wheelRayHits[j];
+                nearestHit = wheelRayHits[i];
+                hasHit = true;
             }
         }
-        ////////////////////////////////////////////////////////////////////////////////////////
-
-        return (nearestHit.distance <= maxDistance);
+        return hasHit && nearestHit.distance <= maxDistance;
     }
-
 
     void CalculateWheelForces(Axle axle, Vector3 wsDownDirection, WheelData wheelData, Vector3 wsAttachPoint, int wheelIndex, int totalWheelsCount, int numberOfPoweredWheels)
     {
