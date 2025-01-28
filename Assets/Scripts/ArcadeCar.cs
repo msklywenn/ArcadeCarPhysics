@@ -171,20 +171,12 @@ public class ArcadeCar : MonoBehaviour
 
 
     [Header("Steering")]
+    public float steeringSpeed = 60f;
+    public float steeringResetSpeed = 50f;
     // x - speed in km/h
     // y - angle in degrees
     [Tooltip("Y - Steereing angle limit (deg). X - Vehicle speed (km/h)")]
     public AnimationCurve steerAngleLimit = AnimationCurve.Linear(0.0f, 35.0f, 100.0f, 5.0f);
-
-    // x - speed in km/h
-    // y - angle in degrees (speed of returning wheels to zero position)
-    [Tooltip("Y - Steereing reset speed (deg/sec). X - Vehicle speed (km/h)")]
-    public AnimationCurve steeringResetSpeed = AnimationCurve.EaseInOut(0.0f, 30.0f, 100.0f, 10.0f);
-
-    // x - speed in km/h
-    // y - angle in degrees
-    [Tooltip("Y - Steereing speed (deg/sec). X - Vehicle speed (km/h)")]
-    public AnimationCurve steeringSpeed = AnimationCurve.Linear(0.0f, 2.0f, 100.0f, 0.5f);
 
     [Header("Debug")]
 
@@ -282,14 +274,6 @@ public class ArcadeCar : MonoBehaviour
         // smoother step
         x = x * x * x * (x * (x * 6 - 15) + 10);
         return x;
-    }
-
-    float GetSteeringHandBrakeK()
-    {
-        // 0.4 - pressed
-        // 1.0 - not pressed
-        float steeringK = Mathf.Clamp01(0.4f + (1.0f - GetHandBrakeK()) * 0.6f);
-        return steeringK;
     }
 
     float GetAccelerationForceMagnitude(AnimationCurve accCurve, float speedMetersPerSec, float dt)
@@ -413,29 +397,39 @@ public class ArcadeCar : MonoBehaviour
         }
 
     }
-
-    float GetSteerAngleLimitInDeg(float speedMetersPerSec)
+    
+    [Range(0, 1)] public float SteeringDeadzone = 0.01f;
+    void Steering(float wheel, float speed)
     {
-        float speedKmH = speedMetersPerSec * 3.6f;
+        float speedKph = Mathf.Abs(speed) * 3.6f;
+        float steering;
+        if (Mathf.Abs(wheel) > SteeringDeadzone)
+        {
+            steering = wheel * steeringSpeed * Time.fixedDeltaTime;
+        }
+        else
+        {
+            float resetSign = -Mathf.Sign(axles[0].steerAngle);
+            float reset = Mathf.Min(Mathf.Abs(axles[0].steerAngle), steeringResetSpeed * Time.fixedDeltaTime);
+            steering = reset * resetSign;
+        }
 
-        // maximum angle limit when hand brake is pressed
-        speedKmH *= GetSteeringHandBrakeK();
-
-        float limitDegrees = steerAngleLimit.Evaluate(speedKmH);
-
-        return limitDegrees;
+        float newSteerAngle = axles[0].steerAngle + steering;
+        float sgn = Mathf.Sign(newSteerAngle);
+        float steerLimit = steerAngleLimit.Evaluate(speedKph);
+        newSteerAngle = Mathf.Min(Math.Abs(newSteerAngle), steerLimit) * sgn;
+        axles[0].steerAngle = newSteerAngle;
     }
 
     void UpdateInput()
     {
-        float v = Input.GetAxis("Vertical");
-        float h = Input.GetAxis("Horizontal");
-        //Debug.Log (string.Format ("H = {0}", h));
+        float v = 0f;
+        float wheel = 0f;
 
-        if (!controllable)
+        if (controllable)
         {
-            v = 0.0f;
-            h = 0.0f;
+            v = Input.GetAxis("Vertical");
+            wheel = Input.GetAxis("Horizontal");
         }
 
         if (Input.GetKey(KeyCode.R) && controllable)
@@ -452,7 +446,7 @@ public class ArcadeCar : MonoBehaviour
             int numHits = Physics.RaycastNonAlloc(resetRay, resetRayHits, 250.0f);
 
             if (numHits > 0)
-            {                
+            {
                 float nearestDistance = float.MaxValue;
                 for (int j = 0; j < numHits; j++)
                 {
@@ -478,13 +472,13 @@ public class ArcadeCar : MonoBehaviour
                 nearestDistance -= 4.0f;
                 Vector3 resetPos = resetRay.origin + resetRay.direction * nearestDistance;
                 Reset(resetPos);
-            } else
+            }
+            else
             {
                 // Hard reset
                 Reset(new Vector3(-69.48f, 5.25f, 132.71f));
             }
         }
-
 
         bool isBrakeNow = false;
         bool isHandBrakeNow = Input.GetKey(KeyCode.Space) && controllable;
@@ -495,37 +489,25 @@ public class ArcadeCar : MonoBehaviour
         if (v > 0.4f)
         {
             if (speed < -0.5f)
-            {
                 isBrakeNow = true;
-            }
             else
-            {
                 isAcceleration = true;
-            }
         }
         else if (v < -0.4f)
         {
             if (speed > 0.5f)
-            {
                 isBrakeNow = true;
-            }
             else
-            {
                 isReverseAcceleration = true;
-            }
         }
 
         // Make tires more slippery (for 1 seconds) when player hit brakes
         if (isBrakeNow == true && isBrake == false)
-        {
             brakeSlipperyTiresTime = 1.0f;
-        }
 
         // slippery tires while handsbrakes are pressed
         if (isHandBrakeNow == true)
-        {
             handBrakeSlipperyTiresTime = Math.Max(0.1f, handBrakeSlipperyTime);
-        }
 
         isBrake = isBrakeNow;
 
@@ -541,47 +523,9 @@ public class ArcadeCar : MonoBehaviour
         axles[0].handBrakeRight = isHandBrake;
         axles[1].handBrakeLeft = isHandBrake;
         axles[1].handBrakeRight = isHandBrake;
-
-
-        //TODO: axles[0] always used for steering
-
-        if (Mathf.Abs(h) > 0.001f)
-        {
-            float speedKmH = Mathf.Abs(speed) * 3.6f;
-
-            // maximum steer speed when hand-brake is pressed
-            speedKmH *= GetSteeringHandBrakeK();
-
-            float steerSpeed = steeringSpeed.Evaluate(speedKmH);
-
-            float newSteerAngle = axles[0].steerAngle + (h * steerSpeed);
-            float sgn = Mathf.Sign(newSteerAngle);
-
-            float steerLimit = GetSteerAngleLimitInDeg(speed);
-
-            newSteerAngle = Mathf.Min(Math.Abs(newSteerAngle), steerLimit) * sgn;
-
-            axles[0].steerAngle = newSteerAngle;
-        }
-        else
-        {
-            float speedKmH = Mathf.Abs(speed) * 3.6f;
-
-            float angleReturnSpeedDegPerSec = steeringResetSpeed.Evaluate(speedKmH);
-
-            angleReturnSpeedDegPerSec = Mathf.Lerp(0.0f, angleReturnSpeedDegPerSec, Mathf.Clamp01(speedKmH / 2.0f));
-
-
-            float ang = axles[0].steerAngle;
-            float sgn = Mathf.Sign(ang);
-
-            ang = Mathf.Abs(ang);
-
-            ang -= angleReturnSpeedDegPerSec * Time.fixedDeltaTime;
-            ang = Mathf.Max(ang, 0.0f) * sgn;
-
-            axles[0].steerAngle = ang;
-        }
+        
+        if (controllable)
+            Steering(wheel, speed);
     }
 
     void Update()
