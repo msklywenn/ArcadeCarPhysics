@@ -176,9 +176,6 @@ public class ArcadeCar : MonoBehaviour
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    float afterFlightSlipperyTiresTime = 0.0f;
-    float brakeSlipperyTiresTime = 0.0f;
-    float handBrakeSlipperyTiresTime = 0.0f;
     bool isBrake = false;
     bool isHandBrake = false;
     bool isAcceleration = false;
@@ -224,14 +221,6 @@ public class ArcadeCar : MonoBehaviour
 
         ApplyVisual();
         CalculateAckermannSteering();
-    }
-
-    float GetHandBrakeK()
-    {
-        float x = handBrakeSlipperyTiresTime / Math.Max(0.1f, handBrakeSlipperyTime);
-        // smoother step
-        x = x * x * x * (x * (x * 6 - 15) + 10);
-        return x;
     }
 
     // given a time, returns a desired speed
@@ -332,14 +321,6 @@ public class ArcadeCar : MonoBehaviour
         isAcceleration = v > 0.4f && speed > -0.5f;
         isReverseAcceleration = v < -0.4f && speed < 0.5f;
 
-        // Make tires more slippery (for 1 seconds) when player hit brakes
-        if (isBrakeNow == true && isBrake == false)
-            brakeSlipperyTiresTime = 1.0f;
-
-        // slippery tires while handsbrakes are pressed
-        if (isHandBrakeNow == true)
-            handBrakeSlipperyTiresTime = Math.Max(0.1f, handBrakeSlipperyTime);
-
         isBrake = isBrakeNow;
 
         // hand brake + acceleration = power slide
@@ -408,11 +389,6 @@ public class ArcadeCar : MonoBehaviour
 
         accelerationForceMagnitude = CalcAccelerationForceMagnitude();
 
-        // 0.8 - pressed
-        // 1.0 - not pressed
-        float accelerationK = Mathf.Clamp01(0.8f + (1.0f - GetHandBrakeK()) * 0.2f);
-        accelerationForceMagnitude *= accelerationK;
-
         CalculateAckermannSteering();
 
         int numberOfPoweredWheels = 0;
@@ -430,8 +406,6 @@ public class ArcadeCar : MonoBehaviour
             KeepUpwards();
         else
             Downforce();
-
-        AdvanceSlipperyTimes();
     }
 
     private bool AreAllWheelsInAir()
@@ -449,41 +423,8 @@ public class ArcadeCar : MonoBehaviour
         return allWheelIsOnAir;
     }
 
-    private void AdvanceSlipperyTimes()
-    {
-        if (afterFlightSlipperyTiresTime > 0.0f)
-        {
-            afterFlightSlipperyTiresTime -= Time.fixedDeltaTime;
-        }
-        else
-        {
-            afterFlightSlipperyTiresTime = 0.0f;
-        }
-
-        if (brakeSlipperyTiresTime > 0.0f)
-        {
-            brakeSlipperyTiresTime -= Time.fixedDeltaTime;
-        }
-        else
-        {
-            brakeSlipperyTiresTime = 0.0f;
-        }
-
-        if (handBrakeSlipperyTiresTime > 0.0f)
-        {
-            handBrakeSlipperyTiresTime -= Time.fixedDeltaTime;
-        }
-        else
-        {
-            handBrakeSlipperyTiresTime = 0.0f;
-        }
-    }
-
     private void KeepUpwards()
     {
-        // set after flight tire slippery time (1 sec)
-        afterFlightSlipperyTiresTime = 1.0f;
-
         // Try to keep vehicle parallel to the ground while jumping
         Vector3 carUp = transform.TransformDirection(new Vector3(0.0f, 1.0f, 0.0f));
         Vector3 worldUp = new Vector3(0.0f, 1.0f, 0.0f);
@@ -540,8 +481,6 @@ public class ArcadeCar : MonoBehaviour
         float speed = GetSpeed();
         float speedKmH = speed * 3.6f;
         GUI.Label(new Rect(30.0f, 20.0f, 150, 130), string.Format("{0:F2} km/h", speedKmH), style);
-
-        GUI.Label(new Rect(30.0f, 40.0f, 150, 130), string.Format("{0:F2} {1:F2} {2:F2}", afterFlightSlipperyTiresTime, brakeSlipperyTiresTime, handBrakeSlipperyTiresTime), style);
 
         float yPos = 60.0f;
         for (int axleIndex = 0; axleIndex < axles.Length; axleIndex++)
@@ -715,30 +654,6 @@ public class ArcadeCar : MonoBehaviour
 
         float lateralFriction = Mathf.Clamp01(axle.laterialFriction);
 
-        float slipperyK = 1.0f;
-
-        //Simulate slippery tires
-        if (afterFlightSlipperyTiresTime > 0.0f)
-        {
-            float slippery = Mathf.Lerp(1.0f, axle.afterFlightSlipperyK, Mathf.Clamp01(afterFlightSlipperyTiresTime));
-            slipperyK = Mathf.Min(slipperyK, slippery);
-        }
-
-        if (brakeSlipperyTiresTime > 0.0f)
-        {
-            float slippery = Mathf.Lerp(1.0f, axle.brakeSlipperyK, Mathf.Clamp01(brakeSlipperyTiresTime));
-            slipperyK = Mathf.Min(slipperyK, slippery);
-        }
-
-        float handBrakeK = GetHandBrakeK();
-        if (handBrakeK > 0.0f)
-        {
-            float slippery = Mathf.Lerp(1.0f, axle.handBrakeSlipperyK, handBrakeK);
-            slipperyK = Mathf.Min(slipperyK, slippery);
-        }
-
-        lateralFriction *= slipperyK;
-
         // Simulate perfect static friction
         Vector3 frictionForce = slidingForce * -lateralFriction;
 
@@ -749,8 +664,7 @@ public class ArcadeCar : MonoBehaviour
         if (isBrake || isHandBrake)
         {
             float mag = longitudinalForce.magnitude;
-            float clampedMag = Mathf.Clamp(axle.brakeForceMag * rb.mass, 0.0f, mag);
-            float brakeForce = clampedMag / mag;
+            float brakeForce = Mathf.Clamp(axle.brakeForceMag * rb.mass, 0.0f, mag) / mag;
 
             if (isHandBrake)
             {
