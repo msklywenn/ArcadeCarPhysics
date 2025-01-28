@@ -8643,55 +8643,10 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   centerOfMass: {x: 0, y: -0.38, z: 0.38}
-  accelerationCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 37.153137
-      outSlope: 37.153137
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.037268084
-    - serializedVersion: 3
-      time: 10.8015995
-      value: 178.6633
-      inSlope: 0.15185316
-      outSlope: 0.15185316
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.04325747
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  accelerationCurveReverse:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 8.85899
-      outSlope: 8.85899
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.06696086
-    - serializedVersion: 3
-      time: 8.840406
-      value: 147.31721
-      inSlope: 4
-      outSlope: 4
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  reverseEvaluationAccuracy: 25
+  ForwardTopSpeed: 130
+  ReverseTopSpeed: 40
+  AccelerationFactor: 0.33333334
+  AccelerationTime: 10
   steeringSpeed: 60
   steeringResetSpeed: 50
   steerAngleLimit:
@@ -11999,55 +11954,10 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   centerOfMass: {x: 0, y: -0.38, z: 0.38}
-  accelerationCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 37.153137
-      outSlope: 37.153137
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.037268084
-    - serializedVersion: 3
-      time: 10.8015995
-      value: 178.6633
-      inSlope: 0.15185316
-      outSlope: 0.15185316
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.04325747
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  accelerationCurveReverse:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 8.85899
-      outSlope: 8.85899
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.06696086
-    - serializedVersion: 3
-      time: 8.840406
-      value: 147.31721
-      inSlope: 4
-      outSlope: 4
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  reverseEvaluationAccuracy: 25
+  ForwardTopSpeed: 130
+  ReverseTopSpeed: 40
+  AccelerationFactor: 0.33333334
+  AccelerationTime: 10
   steeringSpeed: 60
   steeringResetSpeed: 50
   steerAngleLimit:
@@ -27354,55 +27264,10 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   centerOfMass: {x: 0, y: -0.38, z: 0.38}
-  accelerationCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 37.153137
-      outSlope: 37.153137
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.037268084
-    - serializedVersion: 3
-      time: 6
-      value: 130
-      inSlope: 0.15185316
-      outSlope: 0.15185316
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.04325747
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  accelerationCurveReverse:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 8.85899
-      outSlope: 8.85899
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.06696086
-    - serializedVersion: 3
-      time: 8.840406
-      value: 147.31721
-      inSlope: 4
-      outSlope: 4
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  reverseEvaluationAccuracy: 25
+  ForwardTopSpeed: 130
+  ReverseTopSpeed: 40
+  AccelerationFactor: 0.33333334
+  AccelerationTime: 10
   steeringSpeed: 60
   steeringResetSpeed: 50
   steerAngleLimit:
