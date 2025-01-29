@@ -124,6 +124,9 @@ public class ArcadeCar : MonoBehaviour
 
     public Vector3 centerOfMass = Vector3.zero;
 
+    [Tooltip("Only used as a reference for downforce and steering settings")]
+    public float MaxSpeed = 200f; // used only for settings
+
     [Header("Engine")]
     public float ForwardTopSpeed = 130f;
     [Tooltip("How quickly to reach top speed. >1 is slowly, <1 is quickly")]
@@ -142,7 +145,6 @@ public class ArcadeCar : MonoBehaviour
     // y - angle in degrees
     public float SlowSteerAngleLimit = 40f;
     public float FastSteerAngleLimit = 4f;
-    public float FastSteerSpeed = 200f;
     public float SlowFastSteerCurve = 0.9f;
 
     [Header("Other")]
@@ -152,13 +154,10 @@ public class ArcadeCar : MonoBehaviour
     [Tooltip("Stabilization in flight (Ang velocity damping)")]
     public float flightStabilizationDamping = 0.0f;
 
-    // x - speed in km/h
-    // y - Downforce percentage
-    [Tooltip("Y - Downforce (percentage 0%..100%). X - Vehicle speed (km/h)")]
-    public AnimationCurve downForceCurve = AnimationCurve.Linear(0.0f, 0.0f, 200.0f, 100.0f);
+    public float DownForceIntensity = 0.7f;
 
     [Tooltip("Downforce")]
-    public float downForce = 5.0f;
+    public float DownForce = 10f;
 
     [Tooltip("Rotation speed when braking and accelerating at the same time")]
     public float burnRotationSpeed = 5f;
@@ -292,7 +291,7 @@ public class ArcadeCar : MonoBehaviour
         float newSteerAngle = axles[0].steerAngle + steering;
         float sgn = Mathf.Sign(newSteerAngle);
         float steerLimit = Mathf.Lerp(SlowSteerAngleLimit, FastSteerAngleLimit, 
-            EasyCurve(speedKph / FastSteerSpeed, SlowFastSteerCurve));
+            EasyCurve(speedKph / MaxSpeed, SlowFastSteerCurve));
         newSteerAngle = Mathf.Min(Math.Abs(newSteerAngle), steerLimit) * sgn;
         axles[0].steerAngle = newSteerAngle;
     }
@@ -462,12 +461,11 @@ public class ArcadeCar : MonoBehaviour
         float speed = GetSpeed();
         float speedKmH = Mathf.Abs(speed) * 3.6f;
 
-        // TODO replace with simple pow curve
-        float downForceAmount = downForceCurve.Evaluate(speedKmH) / 100.0f;
+        float downForceAmount = 1f - EasyCurve(1f - speedKmH / MaxSpeed, DownForceIntensity);
 
         float mass = rb.mass;
 
-        rb.AddForce(downForce * downForceAmount * mass * carDown);
+        rb.AddForce(DownForce * downForceAmount * mass * carDown);
 
         //Debug.Log(string.Format("{0} downforce", downForceAmount * downForce));
     }
