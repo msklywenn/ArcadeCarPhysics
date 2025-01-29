@@ -42,6 +42,10 @@ public class ArcadeCar : MonoBehaviour
 
         [HideInInspector]
         public string debugText = "-";
+
+        [HideInInspector]
+        public float rotationsPerSecond;
+        public float rotationsPerSecondSpeed;
     }
 
 
@@ -153,6 +157,10 @@ public class ArcadeCar : MonoBehaviour
 
     [Tooltip("Downforce")]
     public float downForce = 5.0f;
+
+    [Tooltip("Rotation speed when braking and accelerating at the same time")]
+    public float burnRotationSpeed = 5f;
+    public float wheelRotationSmoothing = 0.1f;
 
     [Header("Axles")]
     public Axle[] axles = new Axle[2];
@@ -806,22 +814,34 @@ public class ArcadeCar : MonoBehaviour
             return;
         }
 
-        Quaternion localWheelRot = Quaternion.Euler(new Vector3(0.0f, data.yawRad * Mathf.Rad2Deg, 0.0f));
-        Quaternion wsWheelRot = transform.rotation * localWheelRot;
+        float rps;
+        if (axle.isPowered && isBrake && (isAcceleration || isReverseAcceleration))
+        {
+            rps = isAcceleration ? burnRotationSpeed : -burnRotationSpeed;
+        }
+        else
+        {
 
-        Vector3 wsWheelForward = wsWheelRot * Vector3.forward;
-        Vector3 velocityQueryPos = data.isOnGround ? data.touchPoint.point : wsPos;
-        Vector3 wheelVelocity = rb.GetPointVelocity(velocityQueryPos);
-        // Longitudinal speed (meters/sec)
-        float tireLongSpeed = Vector3.Dot(wheelVelocity, wsWheelForward);
+            Quaternion localWheelRot = Quaternion.Euler(new Vector3(0.0f, data.yawRad * Mathf.Rad2Deg, 0.0f));
+            Quaternion wsWheelRot = transform.rotation * localWheelRot;
 
-        // Circle length = 2 * PI * R
-        float wheelLengthMeters = 2 * Mathf.PI * axle.radius;
+            Vector3 wsWheelForward = wsWheelRot * Vector3.forward;
+            Vector3 velocityQueryPos = data.isOnGround ? data.touchPoint.point : wsPos;
+            Vector3 wheelVelocity = rb.GetPointVelocity(velocityQueryPos);
 
-        // Wheel "Revolutions per second";
-        float rps = tireLongSpeed / wheelLengthMeters;
+            // Longitudinal speed (meters/sec)
+            float tireLongSpeed = Vector3.Dot(wheelVelocity, wsWheelForward);
 
-        float deltaRot = Mathf.PI * 2.0f * rps * Time.deltaTime;
+            // Circle length = 2 * PI * R
+            float wheelLengthMeters = 2 * Mathf.PI * axle.radius;
+
+            // Wheel "Revolutions per second";
+            rps = tireLongSpeed / wheelLengthMeters;
+        }
+            
+        data.rotationsPerSecond = Mathf.SmoothDamp(data.rotationsPerSecond, rps, ref data.rotationsPerSecondSpeed, wheelRotationSmoothing);
+
+        float deltaRot = Mathf.PI * 2.0f * data.rotationsPerSecond * Time.deltaTime;
 
         data.visualRotationRad += deltaRot;
     }
