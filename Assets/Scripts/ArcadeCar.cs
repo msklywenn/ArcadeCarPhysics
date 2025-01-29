@@ -1,6 +1,8 @@
 ﻿using System;
 using UnityEngine;
 
+// TODO remove all reference to masses, work with accelerations directly
+
 public class ArcadeCar : MonoBehaviour
 {
     public LayerMask CollisionLayers;
@@ -10,6 +12,7 @@ public class ArcadeCar : MonoBehaviour
 
     const float wheelWidth = 0.085f;
 
+    // TODO transform these clases into structs and ref them
 
     public class WheelData
     {
@@ -55,6 +58,9 @@ public class ArcadeCar : MonoBehaviour
         [Tooltip("Current steering angle (in degrees)")]
         public float steerAngle = 0.0f;
 
+        [Tooltip("Is axle powered by engine")]
+        public bool isPowered = false;
+
         //--
         [Header("Wheel settings")]
         [Tooltip("Wheel radius in meters")]
@@ -64,24 +70,24 @@ public class ArcadeCar : MonoBehaviour
         [Tooltip("Tire laterial friction normalized to 0..1")]
         public float laterialFriction = 0.1f;
 
-        [Range(0.0f, 1.0f)]
+        [Range(0.0f, 0.1f)]
         [Tooltip("Rolling friction, normalized to 0..1")]
         public float rollingFriction = 0.01f;
 
         [Tooltip("Brake force magnitude")]
         public float brakeForceMag = 4.0f;
 
+        //--
         [Header("Suspension settings")]
-
         [Tooltip("Suspension Stiffness (Suspension 'Power'")]
         public float stiffness = 8500.0f;
 
         [Tooltip("Suspension Damping (Suspension 'Bounce')")]
         public float damping = 3000.0f;
 
+        [HideInInspector]
         [Tooltip("Suspension Restitution (Not used now)")]
         public float restitution = 1.0f;
-
 
         [Tooltip("Relaxed suspension length")]
         public float lengthRelaxed = 0.55f;
@@ -95,8 +101,8 @@ public class ArcadeCar : MonoBehaviour
         [HideInInspector]
         public WheelData wheelDataR = new WheelData();
 
+        //--
         [Header("Visual settings")]
-
         [Tooltip("Visual scale for wheels")]
         public float visualScale = 0.03270531f;
 
@@ -106,19 +112,7 @@ public class ArcadeCar : MonoBehaviour
         [Tooltip("Wheel actor right")]
         public GameObject wheelVisualRight;
 
-        [Tooltip("Is axle powered by engine")]
-        public bool isPowered = false;
-
-
-        [Tooltip("After flight slippery coefficent (0 - no friction)")]
-        public float afterFlightSlipperyK = 0.02f;
-
-        [Tooltip("Brake slippery coefficent (0 - no friction)")]
-        public float brakeSlipperyK = 0.5f;
-
-        [Tooltip("Hand brake slippery coefficent (0 - no friction)")]
-        public float handBrakeSlipperyK = 0.01f;
-
+        //--
         [Header("Debug settings")]
         [Tooltip("Debug color for axle")]
         public Color debugColor = Color.white;
@@ -145,22 +139,12 @@ public class ArcadeCar : MonoBehaviour
     [Tooltip("Y - Steereing angle limit (deg). X - Vehicle speed (km/h)")]
     public AnimationCurve steerAngleLimit = AnimationCurve.Linear(0.0f, 35.0f, 100.0f, 5.0f);
 
-    [Header("Debug")]
-
-    public bool debugDraw = true;
-
     [Header("Other")]
-
     [Tooltip("Stabilization in flight (torque)")]
     public float flightStabilizationForce = 8.0f;
 
     [Tooltip("Stabilization in flight (Ang velocity damping)")]
     public float flightStabilizationDamping = 0.0f;
-
-    [Tooltip("Hand brake slippery time in seconds")]
-    public float handBrakeSlipperyTime = 2.2f;
-
-    public bool controllable = true;
 
     // x - speed in km/h
     // y - Downforce percentage
@@ -171,8 +155,14 @@ public class ArcadeCar : MonoBehaviour
     public float downForce = 5.0f;
 
     [Header("Axles")]
-
     public Axle[] axles = new Axle[2];
+
+    [Header("Input")]
+    public bool controllable = true;
+    [Range(0, 1)] public float SteeringDeadzone = 0.01f;
+
+    [Header("Debug")]
+    public bool debugDraw = true;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -189,7 +179,6 @@ public class ArcadeCar : MonoBehaviour
     // For alloc-free raycasts
     Ray wheelRay = new Ray();
     RaycastHit[] wheelRayHits = new RaycastHit[4];
-
 
     void Teleport(Vector3 position)
     {
@@ -277,7 +266,6 @@ public class ArcadeCar : MonoBehaviour
             return -GetAccelerationForceMagnitude(ReverseTopSpeed, ReverseAccelerationFactor, ReverseAccelerationTime, -speed, dt);
     }
 
-    [Range(0, 1)] public float SteeringDeadzone = 0.01f;
     void Steering(float steeringWheel, float speed)
     {
         float speedKph = Mathf.Abs(speed) * 3.6f;
@@ -430,6 +418,7 @@ public class ArcadeCar : MonoBehaviour
         Vector3 worldUp = new Vector3(0.0f, 1.0f, 0.0f);
 
         // Flight stabilization from
+        // TODO: this is probably GPL code so replace with my previous solution
         // https://github.com/supertuxkart/stk-code/blob/master/src/physics/btKart.cpp#L455
 
         // Length of axis depends on the angle - i.e. the further awat
@@ -464,6 +453,7 @@ public class ArcadeCar : MonoBehaviour
         float speed = GetSpeed();
         float speedKmH = Mathf.Abs(speed) * 3.6f;
 
+        // TODO replace with simple pow curve
         float downForceAmount = downForceCurve.Evaluate(speedKmH) / 100.0f;
 
         float mass = rb.mass;
@@ -485,7 +475,8 @@ public class ArcadeCar : MonoBehaviour
         float yPos = 60.0f;
         for (int axleIndex = 0; axleIndex < axles.Length; axleIndex++)
         {
-            GUI.Label(new Rect(30.0f, yPos, 150, 130), string.Format("Axle {0}, steering angle {1:F2}", axleIndex, axles[axleIndex].steerAngle), style);
+            GUI.Label(new Rect(30.0f, yPos, 1500, 130),
+                $"Axle {axleIndex}, steering angle {axles[axleIndex].steerAngle:F2}, compression: {axles[axleIndex].wheelDataL.compression:F2} {axles[axleIndex].wheelDataR.compression:F2}", style);
             yPos += 18.0f;
         }
 
@@ -556,9 +547,8 @@ public class ArcadeCar : MonoBehaviour
         wheelData.isOnGround = false;
         wheelRay.direction = wsDownDirection;
 
-
         // Ray cast (better to use shape cast here, but Unity does not support shape casts)
-
+        // TODO: replace with a single SphereCast
         float traceLen = axle.lengthRelaxed + axle.radius;
 
         wheelRay.origin = wsAttachPoint + wsAxleLeft * wheelWidth;
@@ -588,7 +578,6 @@ public class ArcadeCar : MonoBehaviour
         Debug.AssertFormat(suspLenNow <= traceLen, "Sanity check failed.");
 
         wheelData.isOnGround = true;
-
 
         //
         // Calculate suspension force
@@ -628,7 +617,8 @@ public class ArcadeCar : MonoBehaviour
         // Apply suspension force
         Vector3 suspForce = wsDownDirection * suspForceMag;
         AddForceAtPosition(suspForce, wheelData.touchPoint.point);
-
+        if (debugDraw)
+            Debug.DrawRay(wheelData.touchPoint.point, suspForce / rb.mass, Color.yellow);
 
         //
         // Calculate friction forces
@@ -640,8 +630,7 @@ public class ArcadeCar : MonoBehaviour
 
         // Contact basis (can be different from wheel basis)
         Vector3 c_up = wheelData.touchPoint.normal;
-        Vector3 c_left = (s1.point - s2.point).normalized;
-        Vector3 c_fwd = Vector3.Cross(c_up, c_left);
+        Vector3 c_fwd = Vector3.ProjectOnPlane(wsWheelRot * Vector3.forward, c_up);
 
         // Calculate sliding velocity (velocity without normal force)
         Vector3 slideVelocity = Vector3.ProjectOnPlane(wheelVelocity, c_up);
@@ -650,7 +639,7 @@ public class ArcadeCar : MonoBehaviour
         Vector3 slidingForce = rb.mass / dt / totalWheelsCount * slideVelocity;
 
         if (debugDraw)
-            Debug.DrawRay(wheelData.touchPoint.point, slideVelocity, Color.red);
+            Debug.DrawRay(wheelData.touchPoint.point, slideVelocity / rb.mass, Color.red);
 
         float lateralFriction = Mathf.Clamp01(axle.laterialFriction);
 
@@ -661,7 +650,8 @@ public class ArcadeCar : MonoBehaviour
         Vector3 longitudinalForce = Vector3.Dot(frictionForce, c_fwd) * c_fwd;
 
         // Apply braking force or rolling resistance force or nothing
-        if (isBrake || isHandBrake)
+        bool stop = Mathf.Abs(GetSpeed()) < 0.1f;
+        if (stop || isBrake || isHandBrake)
         {
             float mag = longitudinalForce.magnitude;
             float brakeForce = Mathf.Clamp(axle.brakeForceMag * rb.mass, 0.0f, mag) / mag;
@@ -681,14 +671,15 @@ public class ArcadeCar : MonoBehaviour
             longitudinalForce *= rollingK;
         }
 
-        frictionForce -= longitudinalForce;
-
         if (debugDraw)
         {
-            Debug.DrawRay(wheelData.touchPoint.point, frictionForce, Color.red);
-            Debug.DrawRay(wheelData.touchPoint.point, longitudinalForce, Color.white);
+            Debug.DrawRay(wheelData.touchPoint.point, frictionForce / rb.mass, Color.red);
+            Debug.DrawRay(wheelData.touchPoint.point, (frictionForce - longitudinalForce) / rb.mass, Color.blue);
+            Debug.DrawRay(wheelData.touchPoint.point, longitudinalForce / rb.mass, Color.white);
         }
 
+        frictionForce -= longitudinalForce;
+            
         // Apply resulting force
         AddForceAtPosition(frictionForce, wheelData.touchPoint.point);
 
@@ -700,7 +691,7 @@ public class ArcadeCar : MonoBehaviour
             AddForceAtPosition(engineForce, accForcePoint);
 
             if (debugDraw)
-                Debug.DrawRay(accForcePoint, engineForce, Color.green);
+                Debug.DrawRay(accForcePoint, engineForce / rb.mass, Color.green);
         }
     }
 
@@ -725,7 +716,7 @@ public class ArcadeCar : MonoBehaviour
         }
 
         // http://projects.edy.es/trac/edy_vehicle-physics/wiki/TheStabilizerBars
-        // Apply "stablizier bar" forces
+        // Apply "stablizer bar" forces
         float travelL = 1.0f - Mathf.Clamp01(axle.wheelDataL.compression);
         float travelR = 1.0f - Mathf.Clamp01(axle.wheelDataR.compression);
 
@@ -734,14 +725,14 @@ public class ArcadeCar : MonoBehaviour
         {
             AddForceAtPosition(wsDownDirection * antiRollForce, axle.wheelDataL.touchPoint.point);
             if (debugDraw)
-                Debug.DrawRay(axle.wheelDataL.touchPoint.point, wsDownDirection * antiRollForce, Color.magenta);
+                Debug.DrawRay(axle.wheelDataL.touchPoint.point, wsDownDirection * antiRollForce / rb.mass, Color.magenta);
         }
 
         if (axle.wheelDataR.isOnGround)
         {
             AddForceAtPosition(wsDownDirection * -antiRollForce, axle.wheelDataR.touchPoint.point);
             if (debugDraw)
-                Debug.DrawRay(axle.wheelDataR.touchPoint.point, wsDownDirection * -antiRollForce, Color.magenta);
+                Debug.DrawRay(axle.wheelDataR.touchPoint.point, wsDownDirection * -antiRollForce / rb.mass, Color.magenta);
         }
     }
 
@@ -923,7 +914,6 @@ public class ArcadeCar : MonoBehaviour
 
             UnityEditor.Handles.DrawWireDisc(wsTo + wsAxle * wheelWidth, wsAxle, axle.radius);
             UnityEditor.Handles.DrawWireDisc(wsTo - wsAxle * wheelWidth, wsAxle, axle.radius);
-
         }
     }
 
@@ -932,9 +922,7 @@ public class ArcadeCar : MonoBehaviour
         Vector3 wsDownDirection = transform.TransformDirection(Vector3.down);
         wsDownDirection.Normalize();
         foreach (Axle axle in axles)
-        {
             OnDrawGizmosAxle(wsDownDirection, axle);
-        }
         Gizmos.DrawSphere(transform.TransformPoint(centerOfMass), 0.1f);
     }
 #endif
