@@ -222,16 +222,14 @@ public class ArcadeCar : MonoBehaviour
         CalculateAckermannSteering();
     }
 
-    // given a time, returns a desired speed
-    static float SimpleAccelerationCurve(float topSpeed, float accel, float time, float t)
+    static float EasyCurve(float t, float intensity)
     {
-        return topSpeed * MathF.Pow(MathF.Sin(Mathf.Clamp01(t / time) * MathF.PI / 2f), accel);
+        return Mathf.Pow(MathF.Sin(Mathf.Clamp01(t) * MathF.PI / 2f), intensity);
     }
 
-    // given a speed, returns the corresponding time on the speed curve
-    static float SimpleAccelerationCurveInverted(float topSpeed, float accel, float time, float s)
+    static float EasyCurveInverse(float t, float intensity)
     {
-        return MathF.Asin(MathF.Pow(Mathf.Clamp01(s / topSpeed), 1 / accel)) * time * 2f / Mathf.PI;
+        return MathF.Asin(MathF.Pow(Mathf.Clamp01(t), 1f / intensity)) * 2f / MathF.PI;
     }
 
     float GetAccelerationForceMagnitude(float topSpeed, float accelerationFactor, float accelerationTime, float speedMetersPerSec, float dt)
@@ -240,8 +238,8 @@ public class ArcadeCar : MonoBehaviour
 
         float mass = rb.mass;
 
-        float time = SimpleAccelerationCurveInverted(topSpeed, accelerationFactor, accelerationTime, speedKmH);
-        float desiredSpeed = SimpleAccelerationCurve(topSpeed, accelerationFactor, accelerationTime, time + dt);
+        float time = accelerationTime * EasyCurveInverse(speedKmH / topSpeed, accelerationFactor);
+        float desiredSpeed = topSpeed * EasyCurve((time + dt) / accelerationTime, accelerationFactor);
         desiredSpeed = Mathf.Clamp(desiredSpeed, 0f, topSpeed);
         float acceleration = desiredSpeed - speedKmH;
         
@@ -293,8 +291,8 @@ public class ArcadeCar : MonoBehaviour
 
         float newSteerAngle = axles[0].steerAngle + steering;
         float sgn = Mathf.Sign(newSteerAngle);
-        float x = MathF.Pow(MathF.Sin(speedKph / FastSteerSpeed * Mathf.PI / 2f), SlowFastSteerCurve);
-        float steerLimit = Mathf.Lerp(SlowSteerAngleLimit, FastSteerAngleLimit, x);
+        float steerLimit = Mathf.Lerp(SlowSteerAngleLimit, FastSteerAngleLimit, 
+            EasyCurve(speedKph / FastSteerSpeed, SlowFastSteerCurve));
         newSteerAngle = Mathf.Min(Math.Abs(newSteerAngle), steerLimit) * sgn;
         axles[0].steerAngle = newSteerAngle;
     }
