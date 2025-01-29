@@ -661,7 +661,7 @@ public class ArcadeCar : MonoBehaviour
         if (stop || isBrake || isHandBrake)
         {
             float mag = longitudinalForce.magnitude;
-            float brakeForce = Mathf.Clamp(axle.brakeForceMag * rb.mass, 0.0f, mag) / mag;
+            float brakeForce = mag > 0f ? Mathf.Clamp(axle.brakeForceMag * rb.mass, 0.0f, mag) / mag : 0f;
 
             if (isHandBrake)
             {
