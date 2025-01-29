@@ -140,8 +140,10 @@ public class ArcadeCar : MonoBehaviour
     public float steeringResetSpeed = 50f;
     // x - speed in km/h
     // y - angle in degrees
-    [Tooltip("Y - Steereing angle limit (deg). X - Vehicle speed (km/h)")]
-    public AnimationCurve steerAngleLimit = AnimationCurve.Linear(0.0f, 35.0f, 100.0f, 5.0f);
+    public float SlowSteerAngleLimit = 40f;
+    public float FastSteerAngleLimit = 4f;
+    public float FastSteerSpeed = 200f;
+    public float SlowFastSteerCurve = 0.9f;
 
     [Header("Other")]
     [Tooltip("Stabilization in flight (torque)")]
@@ -291,7 +293,8 @@ public class ArcadeCar : MonoBehaviour
 
         float newSteerAngle = axles[0].steerAngle + steering;
         float sgn = Mathf.Sign(newSteerAngle);
-        float steerLimit = steerAngleLimit.Evaluate(speedKph);
+        float x = MathF.Pow(MathF.Sin(speedKph / FastSteerSpeed * Mathf.PI / 2f), SlowFastSteerCurve);
+        float steerLimit = Mathf.Lerp(SlowSteerAngleLimit, FastSteerAngleLimit, x);
         newSteerAngle = Mathf.Min(Math.Abs(newSteerAngle), steerLimit) * sgn;
         axles[0].steerAngle = newSteerAngle;
     }
