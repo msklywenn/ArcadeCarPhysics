@@ -310,7 +310,7 @@ public class ArcadeCar : MonoBehaviour
             if (Input.GetKey(KeyCode.R)) 
                 ResetToValidPosition();
             isHandBrakeNow = Input.GetKey(KeyCode.Space);
-            isBrakeNow = Input.GetKey(KeyCode.RightControl);
+            isBrakeNow = Input.GetKey(KeyCode.RightControl) || Input.GetKey(KeyCode.LeftControl);
         }
 
         float speed = GetSpeed();

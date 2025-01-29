@@ -8643,6 +8643,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   centerOfMass: {x: 0, y: -0.38, z: 0.38}
+  MaxSpeed: 200
   ForwardTopSpeed: 130
   ForwardAccelerationFactor: 0.33333334
   ForwardAccelerationTime: 10
@@ -8651,64 +8652,20 @@ MonoBehaviour:
   ReverseAccelerationTime: 10
   steeringSpeed: 60
   steeringResetSpeed: 50
-  steerAngleLimit:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 40.08618
-      inSlope: -0.3749111
-      outSlope: -0.3749111
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.024201361
-    - serializedVersion: 3
-      time: 197.41309
-      value: 4.065192
-      inSlope: -0.01809133
-      outSlope: -0.01809133
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.1172876
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  debugDraw: 0
+  SlowSteerAngleLimit: 40
+  FastSteerAngleLimit: 4
+  SlowFastSteerCurve: 0.9
   flightStabilizationForce: 6
   flightStabilizationDamping: 0.7
-  handBrakeSlipperyTime: 1.6
-  controllable: 0
-  downForceCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0.032072805
-      outSlope: 0.032072805
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.08972393
-    - serializedVersion: 3
-      time: 200.15332
-      value: 99.85612
-      inSlope: 1.1371372
-      outSlope: 1.1371372
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.025287088
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  downForce: 10
+  DownForceIntensity: 0.7
+  DownForce: 10
+  burnRotationSpeed: 5
+  wheelRotationSmoothing: 0.1
   axles:
   - width: 1.55
     offset: {x: 1.51, y: 0}
     steerAngle: 0
+    isPowered: 0
     radius: 0.3
     laterialFriction: 0.6
     rollingFriction: 0.03
@@ -8721,14 +8678,11 @@ MonoBehaviour:
     visualScale: 2.9
     wheelVisualLeft: {fileID: 1070394207}
     wheelVisualRight: {fileID: 1707946540}
-    isPowered: 0
-    afterFlightSlipperyK: 0.02
-    brakeSlipperyK: 0.5
-    handBrakeSlipperyK: 0.3
     debugColor: {r: 0, g: 0.23994851, b: 1, a: 1}
   - width: 1.55
     offset: {x: -1.29, y: 0}
     steerAngle: 0
+    isPowered: 1
     radius: 0.3
     laterialFriction: 0.6
     rollingFriction: 0.03
@@ -8741,12 +8695,10 @@ MonoBehaviour:
     visualScale: 2.9
     wheelVisualLeft: {fileID: 323152131}
     wheelVisualRight: {fileID: 1709232753}
-    isPowered: 1
-    afterFlightSlipperyK: 0.02
-    brakeSlipperyK: 0.5
-    handBrakeSlipperyK: 0.2
     debugColor: {r: 0.8773585, g: 0.19450872, b: 0.19450872, a: 1}
+  controllable: 0
   SteeringDeadzone: 0.01
+  debugDraw: 0
 --- !u!54 &329858646
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -11946,6 +11898,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   centerOfMass: {x: 0, y: -0.38, z: 0.38}
+  MaxSpeed: 200
   ForwardTopSpeed: 130
   ForwardAccelerationFactor: 0.33333334
   ForwardAccelerationTime: 10
@@ -11954,64 +11907,20 @@ MonoBehaviour:
   ReverseAccelerationTime: 10
   steeringSpeed: 60
   steeringResetSpeed: 50
-  steerAngleLimit:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 40.08618
-      inSlope: -0.3749111
-      outSlope: -0.3749111
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.024201361
-    - serializedVersion: 3
-      time: 197.41309
-      value: 4.065192
-      inSlope: -0.01809133
-      outSlope: -0.01809133
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.1172876
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  debugDraw: 0
+  SlowSteerAngleLimit: 40
+  FastSteerAngleLimit: 4
+  SlowFastSteerCurve: 0.9
   flightStabilizationForce: 6
   flightStabilizationDamping: 0.7
-  handBrakeSlipperyTime: 1.6
-  controllable: 0
-  downForceCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0.032072805
-      outSlope: 0.032072805
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.08972393
-    - serializedVersion: 3
-      time: 200.15332
-      value: 99.85612
-      inSlope: 1.1371372
-      outSlope: 1.1371372
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.025287088
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  downForce: 10
+  DownForceIntensity: 0.7
+  DownForce: 10
+  burnRotationSpeed: 5
+  wheelRotationSmoothing: 0.1
   axles:
   - width: 1.55
     offset: {x: 1.51, y: 0}
     steerAngle: 0
+    isPowered: 0
     radius: 0.3
     laterialFriction: 0.6
     rollingFriction: 0.03
@@ -12024,14 +11933,11 @@ MonoBehaviour:
     visualScale: 2.9
     wheelVisualLeft: {fileID: 1918628073}
     wheelVisualRight: {fileID: 1275503476}
-    isPowered: 0
-    afterFlightSlipperyK: 0.02
-    brakeSlipperyK: 0.5
-    handBrakeSlipperyK: 0.3
     debugColor: {r: 0, g: 0.23994851, b: 1, a: 1}
   - width: 1.55
     offset: {x: -1.29, y: 0}
     steerAngle: 0
+    isPowered: 1
     radius: 0.3
     laterialFriction: 0.6
     rollingFriction: 0.03
@@ -12044,12 +11950,10 @@ MonoBehaviour:
     visualScale: 2.9
     wheelVisualLeft: {fileID: 732874859}
     wheelVisualRight: {fileID: 129392147}
-    isPowered: 1
-    afterFlightSlipperyK: 0.02
-    brakeSlipperyK: 0.5
-    handBrakeSlipperyK: 0.2
     debugColor: {r: 0.8773585, g: 0.19450872, b: 0.19450872, a: 1}
+  controllable: 0
   SteeringDeadzone: 0.01
+  debugDraw: 0
 --- !u!54 &446176122
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -27247,7 +27151,8 @@ MonoBehaviour:
   CollisionLayers:
     serializedVersion: 2
     m_Bits: 1
-  centerOfMass: {x: 0, y: -0.38, z: 0.38}
+  centerOfMass: {x: 0, y: -0.48, z: 0.38}
+  MaxSpeed: 200
   ForwardTopSpeed: 130
   ForwardAccelerationFactor: 0.8
   ForwardAccelerationTime: 10
@@ -27256,69 +27161,25 @@ MonoBehaviour:
   ReverseAccelerationTime: 3
   steeringSpeed: 60
   steeringResetSpeed: 50
-  steerAngleLimit:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 40.08618
-      inSlope: -0.3749111
-      outSlope: -0.3749111
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.024201361
-    - serializedVersion: 3
-      time: 197.41309
-      value: 4.065192
-      inSlope: -0.01809133
-      outSlope: -0.01809133
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.1172876
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  debugDraw: 1
+  SlowSteerAngleLimit: 40
+  FastSteerAngleLimit: 4
+  SlowFastSteerCurve: 0.95
   flightStabilizationForce: 6
   flightStabilizationDamping: 0.7
-  handBrakeSlipperyTime: 4
-  controllable: 1
-  downForceCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0.032072805
-      outSlope: 0.032072805
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.08972393
-    - serializedVersion: 3
-      time: 200.15332
-      value: 99.85612
-      inSlope: 1.1371372
-      outSlope: 1.1371372
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.025287088
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  downForce: 10
+  DownForceIntensity: 0.7
+  DownForce: 10
+  burnRotationSpeed: 5
+  wheelRotationSmoothing: 0.1
   axles:
   - width: 1.55
     offset: {x: 1.51, y: 0}
     steerAngle: 0
+    isPowered: 0
     radius: 0.3
     laterialFriction: 0.6
     rollingFriction: 0.03
     brakeForceMag: 14
-    stiffness: 15000
+    stiffness: 10000
     damping: 3000
     restitution: 1
     lengthRelaxed: 0.45
@@ -27326,19 +27187,16 @@ MonoBehaviour:
     visualScale: 2.9
     wheelVisualLeft: {fileID: 1044624957}
     wheelVisualRight: {fileID: 630522395}
-    isPowered: 0
-    afterFlightSlipperyK: 0.02
-    brakeSlipperyK: 0.5
-    handBrakeSlipperyK: 0.16
     debugColor: {r: 0, g: 0.23994851, b: 1, a: 1}
   - width: 1.55
     offset: {x: -1.29, y: 0}
     steerAngle: 0
+    isPowered: 1
     radius: 0.3
     laterialFriction: 0.6
     rollingFriction: 0.03
     brakeForceMag: 2
-    stiffness: 9500
+    stiffness: 8000
     damping: 3000
     restitution: 1
     lengthRelaxed: 0.45
@@ -27346,12 +27204,10 @@ MonoBehaviour:
     visualScale: 2.9
     wheelVisualLeft: {fileID: 729691768}
     wheelVisualRight: {fileID: 583428391}
-    isPowered: 1
-    afterFlightSlipperyK: 0.02
-    brakeSlipperyK: 0.5
-    handBrakeSlipperyK: 0.1
     debugColor: {r: 0.8773585, g: 0.19450872, b: 0.19450872, a: 1}
+  controllable: 1
   SteeringDeadzone: 0.01
+  debugDraw: 1
 --- !u!1 &904532266 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 100000, guid: b336add24760dc44cb3ded985727ab20,
