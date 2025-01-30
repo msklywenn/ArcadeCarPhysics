@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63bc1d6671e589342825158958440aa8, type: 3}
+  m_Name: New Car Settings
+  m_EditorClassIdentifier: 
+  CenterOfMass: {x: 0, y: -0.48, z: 0.38}
+  Forward:
+    TopSpeed: 36.11111
+    Acceleration: 0.8
+    Duration: 10
+  Reverse:
+    TopSpeed: 11.111112
+    Acceleration: 0.8
+    Duration: 3
+  MaxSpeed: 200
+  SteeringSpeed: 60
+  SteeringResetSpeed: 50
+  SlowSteerAngleLimit: 40
+  FastSteerAngleLimit: 4
+  SlowFastSteerCurve: 0.9
+  FlightStabilizationForce: 8
+  FlightStabilizationDamping: 0
+  DownForceIntensity: 0.7
+  DownForce: 10
+  BurnRotationSpeed: 5
+  WheelRotationSmoothing: 0.1
+  Front:
+    Width: 1.55
+    Offset: {x: 1.51, y: 0}
+    IsPowered: 0
+    Radius: 0.3
+    LateralFriction: 0.6
+    RollingFriction: 0.005
+    BrakeForce: 14
+    Stiffness: 10000
+    Damping: 3000
+    Restitution: 1
+    RelaxedLength: 0.45
+    AntiRollForce: 10000
+  Rear:
+    Width: 1.55
+    Offset: {x: -1.29, y: 0}
+    IsPowered: 1
+    Radius: 0.3
+    LateralFriction: 0.6
+    RollingFriction: 0.005
+    BrakeForce: 2
+    Stiffness: 8000
+    Damping: 3000
+    Restitution: 1
+    RelaxedLength: 0.45
+    AntiRollForce: 10000

@@ -3531,12 +3531,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5567b36b539381640958ccd34e067824, type: 3}
---- !u!1 &129392147 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 100000, guid: 5567b36b539381640958ccd34e067824,
-    type: 3}
-  m_PrefabInstance: {fileID: 129392146}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &129392148 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 5567b36b539381640958ccd34e067824,
@@ -8596,12 +8590,6 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 319078731}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &323152131 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 100000, guid: 5567b36b539381640958ccd34e067824,
-    type: 3}
-  m_PrefabInstance: {fileID: 889487428}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &323152134 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 5567b36b539381640958ccd34e067824,
@@ -8642,60 +8630,15 @@ MonoBehaviour:
   CollisionLayers:
     serializedVersion: 2
     m_Bits: 1
-  centerOfMass: {x: 0, y: -0.38, z: 0.38}
-  MaxSpeed: 200
-  ForwardTopSpeed: 130
-  ForwardAccelerationFactor: 0.33333334
-  ForwardAccelerationTime: 10
-  ReverseTopSpeed: 40
-  ReverseAccelerationFactor: 0.33333334
-  ReverseAccelerationTime: 10
-  steeringSpeed: 60
-  steeringResetSpeed: 50
-  SlowSteerAngleLimit: 40
-  FastSteerAngleLimit: 4
-  SlowFastSteerCurve: 0.9
-  flightStabilizationForce: 6
-  flightStabilizationDamping: 0.7
-  DownForceIntensity: 0.7
-  DownForce: 10
-  burnRotationSpeed: 5
-  wheelRotationSmoothing: 0.1
-  axles:
-  - width: 1.55
-    offset: {x: 1.51, y: 0}
-    steerAngle: 0
-    isPowered: 0
-    radius: 0.3
-    laterialFriction: 0.6
-    rollingFriction: 0.03
-    brakeForceMag: 14
-    stiffness: 15000
-    damping: 3000
-    restitution: 1
-    lengthRelaxed: 0.45
-    antiRollForce: 10000
-    visualScale: 2.9
-    wheelVisualLeft: {fileID: 1070394207}
-    wheelVisualRight: {fileID: 1707946540}
-    debugColor: {r: 0, g: 0.23994851, b: 1, a: 1}
-  - width: 1.55
-    offset: {x: -1.29, y: 0}
-    steerAngle: 0
-    isPowered: 1
-    radius: 0.3
-    laterialFriction: 0.6
-    rollingFriction: 0.03
-    brakeForceMag: 2
-    stiffness: 9500
-    damping: 3000
-    restitution: 1
-    lengthRelaxed: 0.45
-    antiRollForce: 10000
-    visualScale: 2.9
-    wheelVisualLeft: {fileID: 323152131}
-    wheelVisualRight: {fileID: 1709232753}
-    debugColor: {r: 0.8773585, g: 0.19450872, b: 0.19450872, a: 1}
+  Settings: {fileID: 11400000, guid: a7856e9f165268c43ad5906ef12b0d60, type: 2}
+  Front:
+    VisualScale: 0
+    LeftWheel: {fileID: 0}
+    RightWheel: {fileID: 0}
+  Rear:
+    VisualScale: 0
+    LeftWheel: {fileID: 0}
+    RightWheel: {fileID: 0}
   controllable: 0
   SteeringDeadzone: 0.01
   debugDraw: 0
@@ -11897,60 +11840,15 @@ MonoBehaviour:
   CollisionLayers:
     serializedVersion: 2
     m_Bits: 1
-  centerOfMass: {x: 0, y: -0.38, z: 0.38}
-  MaxSpeed: 200
-  ForwardTopSpeed: 130
-  ForwardAccelerationFactor: 0.33333334
-  ForwardAccelerationTime: 10
-  ReverseTopSpeed: 40
-  ReverseAccelerationFactor: 0.33333334
-  ReverseAccelerationTime: 10
-  steeringSpeed: 60
-  steeringResetSpeed: 50
-  SlowSteerAngleLimit: 40
-  FastSteerAngleLimit: 4
-  SlowFastSteerCurve: 0.9
-  flightStabilizationForce: 6
-  flightStabilizationDamping: 0.7
-  DownForceIntensity: 0.7
-  DownForce: 10
-  burnRotationSpeed: 5
-  wheelRotationSmoothing: 0.1
-  axles:
-  - width: 1.55
-    offset: {x: 1.51, y: 0}
-    steerAngle: 0
-    isPowered: 0
-    radius: 0.3
-    laterialFriction: 0.6
-    rollingFriction: 0.03
-    brakeForceMag: 14
-    stiffness: 15000
-    damping: 3000
-    restitution: 1
-    lengthRelaxed: 0.45
-    antiRollForce: 10000
-    visualScale: 2.9
-    wheelVisualLeft: {fileID: 1918628073}
-    wheelVisualRight: {fileID: 1275503476}
-    debugColor: {r: 0, g: 0.23994851, b: 1, a: 1}
-  - width: 1.55
-    offset: {x: -1.29, y: 0}
-    steerAngle: 0
-    isPowered: 1
-    radius: 0.3
-    laterialFriction: 0.6
-    rollingFriction: 0.03
-    brakeForceMag: 2
-    stiffness: 9500
-    damping: 3000
-    restitution: 1
-    lengthRelaxed: 0.45
-    antiRollForce: 10000
-    visualScale: 2.9
-    wheelVisualLeft: {fileID: 732874859}
-    wheelVisualRight: {fileID: 129392147}
-    debugColor: {r: 0.8773585, g: 0.19450872, b: 0.19450872, a: 1}
+  Settings: {fileID: 11400000, guid: a7856e9f165268c43ad5906ef12b0d60, type: 2}
+  Front:
+    VisualScale: 0
+    LeftWheel: {fileID: 0}
+    RightWheel: {fileID: 0}
+  Rear:
+    VisualScale: 0
+    LeftWheel: {fileID: 0}
+    RightWheel: {fileID: 0}
   controllable: 0
   SteeringDeadzone: 0.01
   debugDraw: 0
@@ -20964,12 +20862,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5567b36b539381640958ccd34e067824, type: 3}
---- !u!1 &732874859 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 100000, guid: 5567b36b539381640958ccd34e067824,
-    type: 3}
-  m_PrefabInstance: {fileID: 732874858}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &732874860 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 5567b36b539381640958ccd34e067824,
@@ -27151,60 +27043,15 @@ MonoBehaviour:
   CollisionLayers:
     serializedVersion: 2
     m_Bits: 1
-  centerOfMass: {x: 0, y: -0.48, z: 0.38}
-  MaxSpeed: 200
-  ForwardTopSpeed: 130
-  ForwardAccelerationFactor: 0.8
-  ForwardAccelerationTime: 10
-  ReverseTopSpeed: 40
-  ReverseAccelerationFactor: 0.8
-  ReverseAccelerationTime: 3
-  steeringSpeed: 60
-  steeringResetSpeed: 50
-  SlowSteerAngleLimit: 40
-  FastSteerAngleLimit: 4
-  SlowFastSteerCurve: 0.95
-  flightStabilizationForce: 6
-  flightStabilizationDamping: 0.7
-  DownForceIntensity: 0.7
-  DownForce: 10
-  burnRotationSpeed: 5
-  wheelRotationSmoothing: 0.1
-  axles:
-  - width: 1.55
-    offset: {x: 1.51, y: 0}
-    steerAngle: 0
-    isPowered: 0
-    radius: 0.3
-    laterialFriction: 0.6
-    rollingFriction: 0.03
-    brakeForceMag: 14
-    stiffness: 10000
-    damping: 3000
-    restitution: 1
-    lengthRelaxed: 0.45
-    antiRollForce: 10000
-    visualScale: 2.9
-    wheelVisualLeft: {fileID: 1044624957}
-    wheelVisualRight: {fileID: 630522395}
-    debugColor: {r: 0, g: 0.23994851, b: 1, a: 1}
-  - width: 1.55
-    offset: {x: -1.29, y: 0}
-    steerAngle: 0
-    isPowered: 1
-    radius: 0.3
-    laterialFriction: 0.6
-    rollingFriction: 0.03
-    brakeForceMag: 2
-    stiffness: 8000
-    damping: 3000
-    restitution: 1
-    lengthRelaxed: 0.45
-    antiRollForce: 10000
-    visualScale: 2.9
-    wheelVisualLeft: {fileID: 729691768}
-    wheelVisualRight: {fileID: 583428391}
-    debugColor: {r: 0.8773585, g: 0.19450872, b: 0.19450872, a: 1}
+  Settings: {fileID: 11400000, guid: a7856e9f165268c43ad5906ef12b0d60, type: 2}
+  Front:
+    VisualScale: 2.9
+    LeftWheel: {fileID: 1044624957}
+    RightWheel: {fileID: 630522395}
+  Rear:
+    VisualScale: 2.9
+    LeftWheel: {fileID: 729691768}
+    RightWheel: {fileID: 583428391}
   controllable: 1
   SteeringDeadzone: 0.01
   debugDraw: 1
@@ -31397,12 +31244,6 @@ LightingSettings:
   m_PVRTiledBaking: 0
   m_NumRaysToShootPerTexel: -1
   m_RespectSceneVisibilityWhenBakingGI: 0
---- !u!1 &1070394207 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 100000, guid: 5567b36b539381640958ccd34e067824,
-    type: 3}
-  m_PrefabInstance: {fileID: 982096829}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1070394210 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 5567b36b539381640958ccd34e067824,
@@ -38046,12 +37887,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5567b36b539381640958ccd34e067824, type: 3}
---- !u!1 &1275503476 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 100000, guid: 5567b36b539381640958ccd34e067824,
-    type: 3}
-  m_PrefabInstance: {fileID: 1275503475}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1275503477 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 5567b36b539381640958ccd34e067824,
@@ -50526,12 +50361,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1122541888}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1707946540 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 100000, guid: 5567b36b539381640958ccd34e067824,
-    type: 3}
-  m_PrefabInstance: {fileID: 1282889985}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1707946543 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 5567b36b539381640958ccd34e067824,
@@ -50671,12 +50500,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1122541888}
   m_LocalEulerAnglesHint: {x: 0, y: -3.1220002, z: 0}
---- !u!1 &1709232753 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 100000, guid: 5567b36b539381640958ccd34e067824,
-    type: 3}
-  m_PrefabInstance: {fileID: 542317456}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1709232756 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 5567b36b539381640958ccd34e067824,
@@ -57833,12 +57656,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5567b36b539381640958ccd34e067824, type: 3}
---- !u!1 &1918628073 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 100000, guid: 5567b36b539381640958ccd34e067824,
-    type: 3}
-  m_PrefabInstance: {fileID: 1918628072}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1918628074 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 5567b36b539381640958ccd34e067824,

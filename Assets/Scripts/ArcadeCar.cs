@@ -3,6 +3,41 @@ using UnityEngine;
 
 // TODO remove all reference to masses, work with accelerations directly
 
+static class Utilities
+{
+    public static float EasyCurve(float t, float intensity)
+    {
+        return Mathf.Pow(MathF.Sin(Mathf.Clamp01(t) * MathF.PI / 2f), intensity);
+    }
+
+    public static float EasyCurveInverse(float t, float intensity)
+    {
+        return MathF.Asin(MathF.Pow(Mathf.Clamp01(t), 1f / intensity)) * 2f / MathF.PI;
+    }
+}
+
+public class SpeedAttribute : PropertyAttribute { }
+
+#if UNITY_EDITOR
+[UnityEditor.CustomPropertyDrawer(typeof(SpeedAttribute))]
+public class SpeedAttributeDrawer : UnityEditor.PropertyDrawer
+{
+    public override void OnGUI(Rect position, UnityEditor.SerializedProperty property, GUIContent label)
+    {
+        const float kphWidth = 100f;
+
+        position.width -= kphWidth;
+        UnityEditor.EditorGUI.PropertyField(position, property, label);
+        property.floatValue = Mathf.Max(0f, property.floatValue);
+
+        position.x += position.width;
+        position.width = kphWidth;
+        GUI.Label(position, $"{property.floatValue * 3.6f} Km/h");
+    }
+}
+
+#endif
+
 public class ArcadeCar : MonoBehaviour
 {
     public LayerMask CollisionLayers;
@@ -34,123 +69,38 @@ public class ArcadeCar : MonoBehaviour
     }
 
     [Serializable]
-    public class Axle
+    public struct Axle
     {
-        [Header("Axle settings")]
-        [Tooltip("Axle width")]
-        public float width = 0.4f;
-
-        [Tooltip("Axle offset")]
-        public Vector2 offset = Vector2.zero;
-
-        [Tooltip("Current steering angle (in degrees)")]
-        public float steerAngle = 0.0f;
-
-        [Tooltip("Is axle powered by engine")]
-        public bool isPowered = false;
-
-        //--
-        [Header("Wheel settings")]
-        [Tooltip("Wheel radius in meters")]
-        public float radius = 0.3f;
-
-        [Range(0.0f, 1.0f)]
-        [Tooltip("Tire laterial friction normalized to 0..1")]
-        public float laterialFriction = 0.1f;
-
-        [Range(0.0f, 0.1f)]
-        [Tooltip("Rolling friction, normalized to 0..1")]
-        public float rollingFriction = 0.01f;
-
-        [Tooltip("Brake force magnitude")]
-        public float brakeForceMag = 4.0f;
-
-        //--
-        [Header("Suspension settings")]
-        [Tooltip("Suspension Stiffness (Suspension 'Power'")]
-        public float stiffness = 8500.0f;
-
-        [Tooltip("Suspension Damping (Suspension 'Bounce')")]
-        public float damping = 3000.0f;
-
-        [HideInInspector]
-        [Tooltip("Suspension Restitution (Not used now)")]
-        public float restitution = 1.0f;
-
-        [Tooltip("Relaxed suspension length")]
-        public float lengthRelaxed = 0.55f;
-
-        [Tooltip("Stabilizer bar anti-roll force")]
-        public float antiRollForce = 10000.0f;
-
-        [HideInInspector]
         public WheelData wheelDataL;
-
-        [HideInInspector]
         public WheelData wheelDataR;
 
-        //--
-        [Header("Visual settings")]
-        [Tooltip("Visual scale for wheels")]
-        public float visualScale = 0.03270531f;
+        public float VisualScale; // TODO: remove, mesh should be properly sized
+        public GameObject LeftWheel;
+        public GameObject RightWheel;
 
-        [Tooltip("Wheel actor left")]
-        public GameObject wheelVisualLeft;
+        public void OnGUI(Camera cam, Transform transform, in CarSettings.Axle axle)
+        {
+            Vector3 localL = new Vector3(axle.Width * -0.5f, axle.Offset.y, axle.Offset.x);
+            Vector3 localR = new Vector3(axle.Width * 0.5f, axle.Offset.y, axle.Offset.x);
 
-        [Tooltip("Wheel actor right")]
-        public GameObject wheelVisualRight;
+            Vector3 wsL = transform.TransformPoint(localL);
+            Vector3 wsR = transform.TransformPoint(localR);
 
-        //--
-        [Header("Debug settings")]
-        [Tooltip("Debug color for axle")]
-        public Color debugColor = Color.white;
+            Vector3 screenPos = cam.WorldToScreenPoint(wsL);
+            GUI.Label(new Rect(screenPos.x, Screen.height - screenPos.y, 150, 130),
+                wheelDataL.compression.ToString("F2"), style);
+            screenPos = cam.WorldToScreenPoint(wsR);
+            GUI.Label(new Rect(screenPos.x, Screen.height - screenPos.y, 150, 130),
+                wheelDataR.compression.ToString("F2"), style);
+        }
     }
 
-    public Vector3 centerOfMass = Vector3.zero;
-
-    [Tooltip("Only used as a reference for downforce and steering settings")]
-    public float MaxSpeed = 200f; // used only for settings
-
-    [Header("Engine")]
-    public float ForwardTopSpeed = 130f;
-    [Tooltip("How quickly to reach top speed. >1 is slowly, <1 is quickly")]
-    [Min(0.01f)] public float ForwardAccelerationFactor = 1f / 3f;
-    [Tooltip("Time to reach top speed")]
-    [Min(0.01f)] public float ForwardAccelerationTime = 10f;
-
-    public float ReverseTopSpeed = 40f;
-    [Min(0.01f)] public float ReverseAccelerationFactor = 1f / 3f;
-    [Min(0.01f)] public float ReverseAccelerationTime = 10f;
-
-    [Header("Steering")]
-    public float steeringSpeed = 60f;
-    public float steeringResetSpeed = 50f;
-    // x - speed in km/h
-    // y - angle in degrees
-    public float SlowSteerAngleLimit = 40f;
-    public float FastSteerAngleLimit = 4f;
-    public float SlowFastSteerCurve = 0.9f;
-
-    [Header("Other")]
-    [Tooltip("Stabilization in flight (torque)")]
-    public float flightStabilizationForce = 8.0f;
-
-    [Tooltip("Stabilization in flight (Ang velocity damping)")]
-    public float flightStabilizationDamping = 0.0f;
-
-    public float DownForceIntensity = 0.7f;
-
-    [Tooltip("Downforce")]
-    public float DownForce = 10f;
-
-    [Tooltip("Rotation speed when braking and accelerating at the same time")]
-    public float burnRotationSpeed = 5f;
-    public float wheelRotationSmoothing = 0.1f;
+    public CarSettings Settings;
 
     [Header("Axles")]
-    public Axle[] axles = new Axle[2];
+    public Axle Front, Rear;
 
-    [Header("Input")]
+    [Header("Input")] // TODO: move me to external component
     public bool controllable = true;
     [Range(0, 1)] public float SteeringDeadzone = 0.01f;
 
@@ -158,6 +108,8 @@ public class ArcadeCar : MonoBehaviour
     public bool debugDraw = true;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    float steerAngle;
 
     bool isBrake = false;
     bool isHandBrake = false;
@@ -183,8 +135,7 @@ public class ArcadeCar : MonoBehaviour
         rb.velocity = new Vector3(0f, 0f, 0f);
         rb.angularVelocity = new Vector3(0f, 0f, 0f);
 
-        for (int axleIndex = 0; axleIndex < axles.Length; axleIndex++)
-            axles[axleIndex].steerAngle = 0.0f;
+        steerAngle = 0f;
     }
 
     void Start()
@@ -192,44 +143,17 @@ public class ArcadeCar : MonoBehaviour
         style.normal.textColor = Color.red;
         
         TryGetComponent(out rb);
-        rb.centerOfMass = centerOfMass;
+        rb.centerOfMass = Settings.CenterOfMass;
     }
 
     void OnValidate()
     {
-        //HACK: to apply steering in editor
+        //HACK: to apply steering in edit mode
         if (rb == null)
             TryGetComponent(out rb);
 
         ApplyVisual();
         CalculateAckermannSteering();
-    }
-
-    static float EasyCurve(float t, float intensity)
-    {
-        return Mathf.Pow(MathF.Sin(Mathf.Clamp01(t) * MathF.PI / 2f), intensity);
-    }
-
-    static float EasyCurveInverse(float t, float intensity)
-    {
-        return MathF.Asin(MathF.Pow(Mathf.Clamp01(t), 1f / intensity)) * 2f / MathF.PI;
-    }
-
-    float GetAccelerationForceMagnitude(float topSpeed, float factor, float duration, float speedMetersPerSec, float dt)
-    {
-        float speedKmH = speedMetersPerSec * 3.6f;
-
-        float mass = rb.mass;
-
-        float t = duration * EasyCurveInverse(speedKmH / topSpeed, factor);
-        float desiredSpeed = topSpeed * EasyCurve((t + dt) / duration, factor);
-        desiredSpeed = Mathf.Clamp(desiredSpeed, 0f, topSpeed);
-        float acceleration = desiredSpeed - speedKmH;
-        
-        acceleration /= 3.6f; //to meters per sec
-        float intensity = acceleration * mass;
-        intensity = Mathf.Max(intensity, 0.0f);
-        return intensity;
     }
 
     public float GetSpeed()
@@ -252,9 +176,9 @@ public class ArcadeCar : MonoBehaviour
         float dt = Time.fixedDeltaTime;
 
         if (isAcceleration)
-            return GetAccelerationForceMagnitude(ForwardTopSpeed, ForwardAccelerationFactor, ForwardAccelerationTime, speed, dt);
+            return Settings.Forward.GetAccelerationForceMagnitude(speed, dt) * rb.mass;
         else
-            return -GetAccelerationForceMagnitude(ReverseTopSpeed, ReverseAccelerationFactor, ReverseAccelerationTime, -speed, dt);
+            return -Settings.Reverse.GetAccelerationForceMagnitude(-speed, dt) * rb.mass;
     }
 
     void Steering(float steeringWheel, float speed)
@@ -263,21 +187,21 @@ public class ArcadeCar : MonoBehaviour
         float steering;
         if (Mathf.Abs(steeringWheel) > SteeringDeadzone)
         {
-            steering = steeringWheel * steeringSpeed * Time.fixedDeltaTime;
+            steering = steeringWheel * Settings.SteeringSpeed * Time.fixedDeltaTime;
         }
         else
         {
-            float resetSign = -Mathf.Sign(axles[0].steerAngle);
-            float reset = Mathf.Min(Mathf.Abs(axles[0].steerAngle), steeringResetSpeed * Time.fixedDeltaTime);
+            float resetSign = -Mathf.Sign(steerAngle);
+            float reset = Mathf.Min(Mathf.Abs(steerAngle), Settings.SteeringResetSpeed * Time.fixedDeltaTime);
             steering = reset * resetSign;
         }
 
-        float newSteerAngle = axles[0].steerAngle + steering;
+        float newSteerAngle = steerAngle + steering;
         float sgn = Mathf.Sign(newSteerAngle);
-        float steerLimit = Mathf.Lerp(SlowSteerAngleLimit, FastSteerAngleLimit, 
-            EasyCurve(speedKph / MaxSpeed, SlowFastSteerCurve));
+        float steerLimit = Mathf.Lerp(Settings.SlowSteerAngleLimit, Settings.FastSteerAngleLimit, 
+            Utilities.EasyCurve(speedKph / Settings.MaxSpeed, Settings.SlowFastSteerCurve));
         newSteerAngle = Mathf.Min(Math.Abs(newSteerAngle), steerLimit) * sgn;
-        axles[0].steerAngle = newSteerAngle;
+        steerAngle = newSteerAngle;
     }
 
     void UpdateInput()
@@ -371,38 +295,26 @@ public class ArcadeCar : MonoBehaviour
 
         CalculateAckermannSteering();
 
-        int numberOfPoweredWheels = 0;
-        for (int axleIndex = 0; axleIndex < axles.Length; axleIndex++)
-            if (axles[axleIndex].isPowered)
-                numberOfPoweredWheels += 2;
+        int poweredWheels = 0;
+        if (Settings.Front.IsPowered) poweredWheels += 2;
+        if (Settings.Rear.IsPowered) poweredWheels += 2;
 
-        int totalWheelsCount = axles.Length * 2;
-        for (int axleIndex = 0; axleIndex < axles.Length; axleIndex++)
-            CalculateAxleForces(axles[axleIndex], totalWheelsCount, numberOfPoweredWheels);
+        CalculateAxleForces(Settings.Front, ref Front, 4, poweredWheels);
+        CalculateAxleForces(Settings.Rear, ref Rear, 4, poweredWheels);
 
-        bool inAir = AreAllWheelsInAir();
-
-        if (inAir)
-            KeepUpwards();
-        else
+        if (TouchingGround())
             Downforce();
+        else
+            KeepUpwards();
     }
 
-    private bool AreAllWheelsInAir()
+    private bool TouchingGround()
     {
-        bool allWheelIsOnAir = true;
-        for (int axleIndex = 0; axleIndex < axles.Length; axleIndex++)
-        {
-            if (axles[axleIndex].wheelDataL.isOnGround || axles[axleIndex].wheelDataR.isOnGround)
-            {
-                allWheelIsOnAir = false;
-                break;
-            }
-        }
-
-        return allWheelIsOnAir;
+        return Front.wheelDataL.isOnGround  || Front.wheelDataR.isOnGround
+            || Rear.wheelDataL.isOnGround || Rear.wheelDataR.isOnGround;
     }
 
+    // TODO: this is probably GPL code so replace with my previous solution
     private void KeepUpwards()
     {
         // Try to keep vehicle parallel to the ground while jumping
@@ -410,7 +322,6 @@ public class ArcadeCar : MonoBehaviour
         Vector3 worldUp = new Vector3(0.0f, 1.0f, 0.0f);
 
         // Flight stabilization from
-        // TODO: this is probably GPL code so replace with my previous solution
         // https://github.com/supertuxkart/stk-code/blob/master/src/physics/btKart.cpp#L455
 
         // Length of axis depends on the angle - i.e. the further awat
@@ -428,30 +339,27 @@ public class ArcadeCar : MonoBehaviour
 
         Vector3 angVelDamping = angVel;
         angVelDamping.y = 0.0f;
-        angVelDamping *= Mathf.Clamp01(flightStabilizationDamping * Time.fixedDeltaTime);
+        angVelDamping *= Mathf.Clamp01(Settings.FlightStabilizationDamping * Time.fixedDeltaTime);
 
         //Debug.Log(string.Format("Ang {0}, Damping {1}", angVel, angVelDamping));
         rb.angularVelocity = angVel - angVelDamping;
 
         // in flight roll stabilization
-        rb.AddTorque(flightStabilizationForce * mass * axis);
+        rb.AddTorque(Settings.FlightStabilizationForce * mass * axis);
     }
 
     private void Downforce()
     {
-        // downforce
         Vector3 carDown = transform.TransformDirection(new Vector3(0.0f, -1.0f, 0.0f));
 
         float speed = GetSpeed();
         float speedKmH = Mathf.Abs(speed) * 3.6f;
 
-        float downForceAmount = 1f - EasyCurve(1f - speedKmH / MaxSpeed, DownForceIntensity);
+        float downForceAmount = 1f - Utilities.EasyCurve(1f - speedKmH / Settings.MaxSpeed, Settings.DownForceIntensity);
 
         float mass = rb.mass;
 
-        rb.AddForce(DownForce * downForceAmount * mass * carDown);
-
-        //Debug.Log(string.Format("{0} downforce", downForceAmount * downForce));
+        rb.AddForce(Settings.DownForce * downForceAmount * mass * carDown);
     }
 
     void OnGUI()
@@ -460,40 +368,20 @@ public class ArcadeCar : MonoBehaviour
             return;
 
         float speed = GetSpeed();
-        float speedKmH = speed * 3.6f;
-        GUI.Label(new Rect(30.0f, 20.0f, 150, 130), string.Format("{0:F2} km/h", speedKmH), style);
+        GUI.Label(new Rect(30, 20, 150, 130), string.Format("{0:F2} km/h", speed * 3.6f));
 
-        float yPos = 60.0f;
-        for (int axleIndex = 0; axleIndex < axles.Length; axleIndex++)
-        {
-            GUI.Label(new Rect(30.0f, yPos, 1500, 130),
-                $"Axle {axleIndex}, steering angle {axles[axleIndex].steerAngle:F2}, compression: {axles[axleIndex].wheelDataL.compression:F2} {axles[axleIndex].wheelDataR.compression:F2}", style);
-            yPos += 18.0f;
-        }
+        GUI.Label(new Rect(30, 50, 1500, 130), $"Steering angle {steerAngle:F2}");
+        GUI.Label(new Rect(30, 80, 1500, 130), $"Front Suspensions: {Front.wheelDataL.compression:F2} {Front.wheelDataR.compression:F2}");
+        GUI.Label(new Rect(30, 100, 1500, 130), $"Rear Suspensions: {Rear.wheelDataL.compression:F2} {Rear.wheelDataR.compression:F2}");
 
         Camera cam = Camera.current;
         if (cam == null)
-        {
             return;
-        }
 
         if (debugDraw)
         {
-            foreach (Axle axle in axles)
-            {
-                Vector3 localL = new Vector3(axle.width * -0.5f, axle.offset.y, axle.offset.x);
-                Vector3 localR = new Vector3(axle.width * 0.5f, axle.offset.y, axle.offset.x);
-
-                Vector3 wsL = transform.TransformPoint(localL);
-                Vector3 wsR = transform.TransformPoint(localR);
-
-                Vector3 screenPos = cam.WorldToScreenPoint(wsL);
-                GUI.Label(new Rect(screenPos.x, Screen.height - screenPos.y, 150, 130),
-                    axle.wheelDataL.compression.ToString("F2"), style);
-                screenPos = cam.WorldToScreenPoint(wsR);
-                GUI.Label(new Rect(screenPos.x, Screen.height - screenPos.y, 150, 130),
-                    axle.wheelDataR.compression.ToString("F2"), style);
-            }
+            Front.OnGUI(cam, transform, Settings.Front);
+            Rear.OnGUI(cam, transform, Settings.Rear);
         }
     }
 
@@ -520,7 +408,7 @@ public class ArcadeCar : MonoBehaviour
         return hasHit && nearestHit.distance <= maxDistance;
     }
 
-    void CalculateWheelForces(Axle axle, in Vector3 wsDownDirection, ref WheelData wheelData, in Vector3 wsAttachPoint, int totalWheelsCount, int numberOfPoweredWheels)
+    void CalculateWheelForces(in CarSettings.Axle settings, in Vector3 wsDownDirection, ref WheelData wheelData, in Vector3 wsAttachPoint, int totalWheelsCount, int numberOfPoweredWheels)
     {
         float dt = Time.fixedDeltaTime;
 
@@ -536,7 +424,7 @@ public class ArcadeCar : MonoBehaviour
 
         // Ray cast (better to use shape cast here, but Unity does not support shape casts)
         // TODO: replace with a single SphereCast
-        float traceLen = axle.lengthRelaxed + axle.radius;
+        float traceLen = settings.RelaxedLength + settings.Radius;
 
         wheelRay.origin = wsAttachPoint + wsAxleLeft * wheelWidth;
         RaycastHit s1 = new RaycastHit();
@@ -553,14 +441,14 @@ public class ArcadeCar : MonoBehaviour
         if (!isCollided || !b1 || !b2)
         {
             // wheel do not touch the ground (relaxing spring)
-            float relaxSpeed = 1.0f;
+            float relaxSpeed = settings.Restitution;
             wheelData.compressionPrev = wheelData.compression;
             wheelData.compression = Mathf.Clamp01(wheelData.compression - dt * relaxSpeed);
             return;
         }
 
         // Consider wheel radius
-        float suspLenNow = wheelData.touchPoint.distance - axle.radius;
+        float suspLenNow = wheelData.touchPoint.distance - settings.Radius;
 
         Debug.AssertFormat(suspLenNow <= traceLen, "Sanity check failed.");
 
@@ -579,20 +467,20 @@ public class ArcadeCar : MonoBehaviour
         // Positive value means that the spring is compressed
         // Negative value means that the spring is elongated.
 
-        wheelData.compression = 1.0f - Mathf.Clamp01(suspLenNow / axle.lengthRelaxed);
+        wheelData.compression = 1.0f - Mathf.Clamp01(suspLenNow / settings.RelaxedLength);
 
         // Hooke's law (springs)
         // F = -k x 
 
         // Spring force (try to reset compression from spring)
-        float springForce = wheelData.compression * -axle.stiffness;
+        float springForce = wheelData.compression * -settings.Stiffness;
         suspForceMag += springForce;
 
         // Damping force (try to reset velocity to 0)
         float suspCompressionVelocity = (wheelData.compression - wheelData.compressionPrev) / dt;
         wheelData.compressionPrev = wheelData.compression;
 
-        float damperForce = -suspCompressionVelocity * axle.damping;
+        float damperForce = -suspCompressionVelocity * settings.Damping;
         suspForceMag += damperForce;
 
         // Only consider component of force that is along the contact normal.
@@ -626,7 +514,7 @@ public class ArcadeCar : MonoBehaviour
         if (debugDraw)
             Debug.DrawRay(wheelData.touchPoint.point, slideVelocity / rb.mass, Color.red);
 
-        float lateralFriction = Mathf.Clamp01(axle.laterialFriction);
+        float lateralFriction = Mathf.Clamp01(settings.LateralFriction);
 
         // Simulate perfect static friction
         Vector3 frictionForce = slidingForce * -lateralFriction;
@@ -639,7 +527,7 @@ public class ArcadeCar : MonoBehaviour
         if (stop || isBrake || isHandBrake)
         {
             float mag = longitudinalForce.magnitude;
-            float brakeForce = mag > 0f ? Mathf.Clamp(axle.brakeForceMag * rb.mass, 0.0f, mag) / mag : 0f;
+            float brakeForce = mag > 0f ? Mathf.Clamp(settings.BrakeForce * rb.mass, 0.0f, mag) / mag : 0f;
 
             if (isHandBrake)
             {
@@ -652,7 +540,7 @@ public class ArcadeCar : MonoBehaviour
         else if (!isAcceleration && !isReverseAcceleration)
         {
             // Apply rolling-friction (automatic slow-down) only if player don't press the accelerator
-            float rollingK = 1.0f - Mathf.Clamp01(axle.rollingFriction);
+            float rollingK = 1.0f - Mathf.Clamp01(settings.RollingFriction);
             longitudinalForce *= rollingK;
         }
 
@@ -669,7 +557,7 @@ public class ArcadeCar : MonoBehaviour
         AddForceAtPosition(frictionForce, wheelData.touchPoint.point);
 
         // Engine force
-        if (axle.isPowered && Mathf.Abs(accelerationForceMagnitude) > 0.01f)
+        if (settings.IsPowered && Mathf.Abs(accelerationForceMagnitude) > 0.01f)
         {
             Vector3 accForcePoint = wheelData.touchPoint.point - (wsDownDirection * 0.2f);
             Vector3 engineForce = c_fwd * accelerationForceMagnitude / numberOfPoweredWheels / dt;
@@ -680,26 +568,26 @@ public class ArcadeCar : MonoBehaviour
         }
     }
 
-    void CalculateAxleForces(Axle axle, int totalWheelsCount, int numberOfPoweredWheels)
+    void CalculateAxleForces(in CarSettings.Axle settings, ref Axle axle, int totalWheelsCount, int numberOfPoweredWheels)
     {
         Vector3 wsDownDirection = transform.TransformDirection(Vector3.down);
         wsDownDirection.Normalize();
 
-        Vector3 localL = new Vector3(axle.width * -0.5f, axle.offset.y, axle.offset.x);
-        Vector3 localR = new Vector3(axle.width * 0.5f, axle.offset.y, axle.offset.x);
+        Vector3 localL = new Vector3(settings.Width * -0.5f, settings.Offset.y, settings.Offset.x);
+        Vector3 localR = new Vector3(settings.Width * 0.5f, settings.Offset.y, settings.Offset.x);
 
         Vector3 wsL = transform.TransformPoint(localL);
         Vector3 wsR = transform.TransformPoint(localR);
 
-        CalculateWheelForces(axle, wsDownDirection, ref axle.wheelDataL, wsL, totalWheelsCount, numberOfPoweredWheels);
-        CalculateWheelForces(axle, wsDownDirection, ref axle.wheelDataR, wsR, totalWheelsCount, numberOfPoweredWheels);
+        CalculateWheelForces(settings, wsDownDirection, ref axle.wheelDataL, wsL, totalWheelsCount, numberOfPoweredWheels);
+        CalculateWheelForces(settings, wsDownDirection, ref axle.wheelDataR, wsR, totalWheelsCount, numberOfPoweredWheels);
 
         // http://projects.edy.es/trac/edy_vehicle-physics/wiki/TheStabilizerBars
         // Apply "stablizer bar" forces
         float travelL = 1.0f - Mathf.Clamp01(axle.wheelDataL.compression);
         float travelR = 1.0f - Mathf.Clamp01(axle.wheelDataR.compression);
 
-        float antiRollForce = (travelL - travelR) * axle.antiRollForce;
+        float antiRollForce = (travelL - travelR) * settings.AntiRollForce;
         if (axle.wheelDataL.isOnGround)
         {
             AddForceAtPosition(wsDownDirection * antiRollForce, axle.wheelDataL.touchPoint.point);
@@ -718,50 +606,38 @@ public class ArcadeCar : MonoBehaviour
     void CalculateAckermannSteering()
     {
         // Copy desired steering
-        for (int axleIndex = 0; axleIndex < axles.Length; axleIndex++)
-        {
-            float steerAngleRad = axles[axleIndex].steerAngle * Mathf.Deg2Rad;
+        float steerAngleRad = steerAngle * Mathf.Deg2Rad;
+        Front.wheelDataL.yawRad = steerAngleRad;
+        Front.wheelDataR.yawRad = steerAngleRad;
 
-            axles[axleIndex].wheelDataL.yawRad = steerAngleRad;
-            axles[axleIndex].wheelDataR.yawRad = steerAngleRad;
-        }
-
-        if (axles.Length != 2)
-        {
-            Debug.LogWarning("Ackermann work only for 2 axle vehicles.");
-            return;
-        }
-
-        Axle frontAxle = axles[0];
-        Axle rearAxle = axles[1];
-
-        if (Mathf.Abs(rearAxle.steerAngle) > 0.0001f)
-        {
-            Debug.LogWarning("Ackermann work only for vehicles with forward steering axle.");
-            return;
-        }
-
-        // Calculate our chassis (remove scale)
-        Vector3 axleDiff = transform.TransformPoint(new Vector3(0.0f, frontAxle.offset.y, frontAxle.offset.x)) - transform.TransformPoint(new Vector3(0.0f, rearAxle.offset.y, rearAxle.offset.x));
+        // TODO: does not need to be done in world space, doesn't even need to build vectors for anything
+        // These are just two constants?
+        // Calculate our chassis (remove scale) <= just don't scale!
+        Vector3 frontOffset = new Vector3(0.0f, Settings.Front.Offset.y, Settings.Front.Offset.x);
+        Vector3 rearOffset = new Vector3(0.0f, Settings.Rear.Offset.y, Settings.Rear.Offset.x);
+        Vector3 axleDiff = transform.TransformPoint(frontOffset) - transform.TransformPoint(rearOffset); // TODO: just sub then transform ?
         float axleSeparation = axleDiff.magnitude;
 
-        Vector3 wheelDiff = transform.TransformPoint(new Vector3(frontAxle.width * -0.5f, frontAxle.offset.y, frontAxle.offset.x)) - transform.TransformPoint(new Vector3(frontAxle.width * 0.5f, frontAxle.offset.y, frontAxle.offset.x));
+        Vector3 leftWheel = new Vector3(Settings.Front.Width * -0.5f, Settings.Front.Offset.y, Settings.Front.Offset.x);
+        Vector3 rightWheel = new Vector3(Settings.Front.Width * 0.5f, Settings.Front.Offset.y, Settings.Front.Offset.x);
+        Vector3 wheelDiff = transform.TransformPoint(leftWheel) - transform.TransformPoint(rightWheel); // TODO: just sub then transform ?
         float wheelsSeparation = wheelDiff.magnitude;
 
         // Get turning circle radius for steering angle input
-        float turningCircleRadius = axleSeparation / Mathf.Tan(frontAxle.steerAngle * Mathf.Deg2Rad);
+        float turningCircleRadius = axleSeparation / Mathf.Tan(steerAngle * Mathf.Deg2Rad);
 
         // Make front inside tire turn sharper and outside tire less sharp based on turning circle radius
         float steerAngleLeft = Mathf.Atan(axleSeparation / (turningCircleRadius + (wheelsSeparation / 2)));
         float steerAngleRight = Mathf.Atan(axleSeparation / (turningCircleRadius - (wheelsSeparation / 2)));
 
-        frontAxle.wheelDataL.yawRad = steerAngleLeft;
-        frontAxle.wheelDataR.yawRad = steerAngleRight;
+        Front.wheelDataL.yawRad = steerAngleLeft;
+        Front.wheelDataR.yawRad = steerAngleRight;
     }
 
-    void CalculateWheelVisualTransform(in Vector3 wsAttachPoint, in Vector3 wsDownDirection, Axle axle, in WheelData data, bool leftWheel, out Vector3 pos, out Quaternion rot)
+    void CalculateWheelVisualTransform(in Vector3 wsAttachPoint, in Vector3 wsDownDirection, float lengthRelaxed,
+        in WheelData data, bool leftWheel, out Vector3 pos, out Quaternion rot)
     {
-        float suspCurrentLen = Mathf.Clamp01(1.0f - data.compression) * axle.lengthRelaxed;
+        float suspCurrentLen = Mathf.Clamp01(1.0f - data.compression) * lengthRelaxed;
 
         pos = wsAttachPoint + wsDownDirection * suspCurrentLen;
 
@@ -785,7 +661,8 @@ public class ArcadeCar : MonoBehaviour
         rot = transform.rotation * localWheelRot;
     }
 
-    void CalculateWheelRotationFromSpeed(Axle axle, ref WheelData data, in Vector3 wsPos)
+    void CalculateWheelRotationFromSpeed(CarSettings settings, in CarSettings.Axle axleSettings,
+        ref WheelData data, in Vector3 wsPos)
     {
         if (rb == null)
         {
@@ -794,13 +671,12 @@ public class ArcadeCar : MonoBehaviour
         }
 
         float rps;
-        if (axle.isPowered && isBrake && (isAcceleration || isReverseAcceleration))
+        if (axleSettings.IsPowered && isBrake && (isAcceleration || isReverseAcceleration))
         {
-            rps = isAcceleration ? burnRotationSpeed : -burnRotationSpeed;
+            rps = isAcceleration ? settings.BurnRotationSpeed : -settings.BurnRotationSpeed;
         }
         else
         {
-
             Quaternion localWheelRot = Quaternion.Euler(new Vector3(0.0f, data.yawRad * Mathf.Rad2Deg, 0.0f));
             Quaternion wsWheelRot = transform.rotation * localWheelRot;
 
@@ -812,14 +688,14 @@ public class ArcadeCar : MonoBehaviour
             float tireLongSpeed = Vector3.Dot(wheelVelocity, wsWheelForward);
 
             // Circle length = 2 * PI * R
-            float wheelLengthMeters = 2 * Mathf.PI * axle.radius;
+            float wheelLengthMeters = 2 * Mathf.PI * axleSettings.Radius;
 
             // Wheel "Revolutions per second";
             rps = tireLongSpeed / wheelLengthMeters;
         }
             
         data.rotationsPerSecond = Mathf.SmoothDamp(data.rotationsPerSecond, rps,
-            ref data.rotationsPerSecondSpeed, wheelRotationSmoothing);
+            ref data.rotationsPerSecondSpeed, settings.WheelRotationSmoothing);
 
         float deltaRot = Mathf.PI * 2.0f * data.rotationsPerSecond * Time.deltaTime;
 
@@ -831,68 +707,74 @@ public class ArcadeCar : MonoBehaviour
         Vector3 wsDownDirection = transform.TransformDirection(Vector3.down);
         wsDownDirection.Normalize();
 
-        for (int axleIndex = 0; axleIndex < axles.Length; axleIndex++)
-        {
-            Axle axle = axles[axleIndex];
-
-            Vector3 localL = new Vector3(axle.width * -0.5f, axle.offset.y, axle.offset.x);
-            Vector3 localR = new Vector3(axle.width * 0.5f, axle.offset.y, axle.offset.x);
-
-            Vector3 wsL = transform.TransformPoint(localL);
-            Vector3 wsR = transform.TransformPoint(localR);
-
-            Vector3 wsPos;
-            Quaternion wsRot;
-
-            if (axle.wheelVisualLeft != null)
-            {
-                CalculateWheelVisualTransform(wsL, wsDownDirection, axle, axle.wheelDataL, true, out wsPos, out wsRot);
-                axle.wheelVisualLeft.transform.SetPositionAndRotation(wsPos, wsRot);
-                axle.wheelVisualLeft.transform.localScale
-                    = new Vector3(axle.radius, axle.radius, axle.radius) * axle.visualScale;
-
-                CalculateWheelRotationFromSpeed(axle, ref axle.wheelDataL, wsPos);
-            }
-
-            if (axle.wheelVisualRight != null)
-            {
-                CalculateWheelVisualTransform(wsR, wsDownDirection, axle, axle.wheelDataR, false, out wsPos, out wsRot);
-                axle.wheelVisualRight.transform.SetPositionAndRotation(wsPos, wsRot);
-                axle.wheelVisualRight.transform.localScale
-                    = new Vector3(axle.radius, axle.radius, axle.radius) * axle.visualScale;
-
-                CalculateWheelRotationFromSpeed(axle, ref axle.wheelDataR, wsPos);
-            }
-        }
+        ApplyAxleVisual(ref wsDownDirection, ref Front, Settings.Front);
+        ApplyAxleVisual(ref wsDownDirection, ref Rear, Settings.Rear);
     }
 
-#if UNITY_EDITOR
-    void OnDrawGizmosAxle(Vector3 wsDownDirection, Axle axle)
+    private void ApplyAxleVisual(ref Vector3 wsDownDirection, ref Axle axle, in CarSettings.Axle axleSettings)
     {
-        Vector3 localL = new Vector3(axle.width * -0.5f, axle.offset.y, axle.offset.x);
-        Vector3 localR = new Vector3(axle.width * 0.5f, axle.offset.y, axle.offset.x);
+        Vector3 localL = new Vector3(axleSettings.Width * -0.5f, axleSettings.Offset.y, axleSettings.Offset.x);
+        Vector3 localR = new Vector3(axleSettings.Width * 0.5f, axleSettings.Offset.y, axleSettings.Offset.x);
 
         Vector3 wsL = transform.TransformPoint(localL);
         Vector3 wsR = transform.TransformPoint(localR);
 
-        Gizmos.color = axle.debugColor;
+        Vector3 wsPos;
+        Quaternion wsRot;
+
+        Vector3 wheelScale = axleSettings.Radius * axle.VisualScale * Vector3.one; // TODO: remove
+
+        if (axle.LeftWheel != null)
+        {
+            CalculateWheelVisualTransform(wsL, wsDownDirection, axleSettings.RelaxedLength, axle.wheelDataL,
+                true, out wsPos, out wsRot);
+            axle.LeftWheel.transform.SetPositionAndRotation(wsPos, wsRot);
+            axle.LeftWheel.transform.localScale = wheelScale;
+
+            CalculateWheelRotationFromSpeed(Settings, axleSettings, ref axle.wheelDataL, wsPos);
+        }
+
+        if (axle.RightWheel != null)
+        {
+            CalculateWheelVisualTransform(wsR, wsDownDirection, axleSettings.RelaxedLength, axle.wheelDataR,
+                false, out wsPos, out wsRot);
+            axle.RightWheel.transform.SetPositionAndRotation(wsPos, wsRot);
+            axle.RightWheel.transform.localScale = wheelScale;
+
+            CalculateWheelRotationFromSpeed(Settings, axleSettings, ref axle.wheelDataR, wsPos);
+        }
+    }
+
+#if UNITY_EDITOR
+    void OnDrawGizmosAxle(Vector3 wsDownDirection, in CarSettings.Axle axleSettings, in Axle axle)
+    {
+        Vector3 localL = new Vector3(axleSettings.Width * -0.5f, axleSettings.Offset.y, axleSettings.Offset.x);
+        Vector3 localR = new Vector3(axleSettings.Width * 0.5f, axleSettings.Offset.y, axleSettings.Offset.x);
+
+        Vector3 wsL = transform.TransformPoint(localL);
+        Vector3 wsR = transform.TransformPoint(localR);
+
+        Gizmos.color = Color.magenta;
 
         //draw axle
         Gizmos.DrawLine(wsL, wsR);
 
         //draw line to com
-        Gizmos.DrawLine(transform.TransformPoint(new Vector3(0.0f, axle.offset.y, axle.offset.x)), transform.TransformPoint(centerOfMass));
+        Gizmos.DrawLine(transform.TransformPoint(
+            new Vector3(0.0f, axleSettings.Offset.y, axleSettings.Offset.x)),
+            transform.TransformPoint(Settings.CenterOfMass));
 
-        DrawWheelGizmo(ref wsDownDirection, axle, true, axle.wheelDataL, wsL);
-        DrawWheelGizmo(ref wsDownDirection, axle, false, axle.wheelDataL, wsL);
+        DrawWheelGizmo(ref wsDownDirection, axleSettings, true, axle.wheelDataL, wsL);
+        DrawWheelGizmo(ref wsDownDirection, axleSettings, false, axle.wheelDataR, wsR);
     }
 
-    private void DrawWheelGizmo(ref Vector3 wsDownDirection, Axle axle, bool leftWheel, in WheelData wheelData, in Vector3 wsFrom)
+    private void DrawWheelGizmo(ref Vector3 wsDownDirection, in CarSettings.Axle axle,
+        bool leftWheel, in WheelData wheelData, in Vector3 wsFrom)
     {
-        Gizmos.color = wheelData.isOnGround ? Color.yellow : axle.debugColor;
+        Gizmos.color = wheelData.isOnGround ? Color.yellow : Color.red;
         UnityEditor.Handles.color = Gizmos.color;
 
-        float suspCurrentLen = Mathf.Clamp01(1.0f - wheelData.compression) * axle.lengthRelaxed;
+        float suspCurrentLen = Mathf.Clamp01(1.0f - wheelData.compression) * axle.RelaxedLength;
 
         Vector3 wsTo = wsFrom + wsDownDirection * suspCurrentLen;
 
@@ -908,22 +790,21 @@ public class ArcadeCar : MonoBehaviour
 
         // Draw wheel axle
         Gizmos.DrawLine(wsTo, wsTo + wsAxle * 0.1f);
-        Gizmos.DrawLine(wsTo, wsTo + wsForward * axle.radius);
+        Gizmos.DrawLine(wsTo, wsTo + wsForward * axle.Radius);
 
         // Draw wheel
-        UnityEditor.Handles.DrawWireDisc(wsTo, wsAxle, axle.radius);
-
-        UnityEditor.Handles.DrawWireDisc(wsTo + wsAxle * wheelWidth, wsAxle, axle.radius);
-        UnityEditor.Handles.DrawWireDisc(wsTo - wsAxle * wheelWidth, wsAxle, axle.radius);
+        UnityEditor.Handles.DrawWireDisc(wsTo, wsAxle, axle.Radius);
+        UnityEditor.Handles.DrawWireDisc(wsTo + wsAxle * wheelWidth, wsAxle, axle.Radius);
+        UnityEditor.Handles.DrawWireDisc(wsTo - wsAxle * wheelWidth, wsAxle, axle.Radius);
     }
 
     void OnDrawGizmos()
     {
         Vector3 wsDownDirection = transform.TransformDirection(Vector3.down);
         wsDownDirection.Normalize();
-        foreach (Axle axle in axles)
-            OnDrawGizmosAxle(wsDownDirection, axle);
-        Gizmos.DrawSphere(transform.TransformPoint(centerOfMass), 0.1f);
+        OnDrawGizmosAxle(wsDownDirection, Settings.Front, Front);
+        OnDrawGizmosAxle(wsDownDirection, Settings.Rear, Rear);
+        Gizmos.DrawSphere(transform.TransformPoint(Settings.CenterOfMass), 0.1f);
     }
 #endif
 }
