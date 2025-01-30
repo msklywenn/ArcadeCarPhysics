@@ -7,47 +7,31 @@ public class ArcadeCar : MonoBehaviour
 {
     public LayerMask CollisionLayers;
 
-    const int WHEEL_LEFT_INDEX = 0;
-    const int WHEEL_RIGHT_INDEX = 1;
-
     const float wheelWidth = 0.085f;
 
-    // TODO transform these clases into structs and ref them
-
-    public class WheelData
+    public struct WheelData
     {
         // is wheel touched ground or not ?
-        [HideInInspector]
-        public bool isOnGround = false;
+        public bool isOnGround;
 
         // wheel ground touch point
-        [HideInInspector]
-        public RaycastHit touchPoint = new RaycastHit();
+        public RaycastHit touchPoint;
 
         // real yaw, after Ackermann steering correction
-        [HideInInspector]
-        public float yawRad = 0.0f;
+        public float yawRad;
 
         // visual rotation
-        [HideInInspector]
-        public float visualRotationRad = 0.0f;
+        public float visualRotationRad;
 
         // suspension compression
-        [HideInInspector]
-        public float compression = 0.0f;
+        public float compression;
 
         // suspension compression on previous update
-        [HideInInspector]
-        public float compressionPrev = 0.0f;
+        public float compressionPrev;
 
-        [HideInInspector]
-        public string debugText = "-";
-
-        [HideInInspector]
         public float rotationsPerSecond;
         public float rotationsPerSecondSpeed;
     }
-
 
     [Serializable]
     public class Axle
@@ -100,10 +84,10 @@ public class ArcadeCar : MonoBehaviour
         public float antiRollForce = 10000.0f;
 
         [HideInInspector]
-        public WheelData wheelDataL = new WheelData();
+        public WheelData wheelDataL;
 
         [HideInInspector]
-        public WheelData wheelDataR = new WheelData();
+        public WheelData wheelDataR;
 
         //--
         [Header("Visual settings")]
@@ -231,14 +215,14 @@ public class ArcadeCar : MonoBehaviour
         return MathF.Asin(MathF.Pow(Mathf.Clamp01(t), 1f / intensity)) * 2f / MathF.PI;
     }
 
-    float GetAccelerationForceMagnitude(float topSpeed, float accelerationFactor, float accelerationTime, float speedMetersPerSec, float dt)
+    float GetAccelerationForceMagnitude(float topSpeed, float factor, float duration, float speedMetersPerSec, float dt)
     {
         float speedKmH = speedMetersPerSec * 3.6f;
 
         float mass = rb.mass;
 
-        float time = accelerationTime * EasyCurveInverse(speedKmH / topSpeed, accelerationFactor);
-        float desiredSpeed = topSpeed * EasyCurve((time + dt) / accelerationTime, accelerationFactor);
+        float t = duration * EasyCurveInverse(speedKmH / topSpeed, factor);
+        float desiredSpeed = topSpeed * EasyCurve((t + dt) / duration, factor);
         desiredSpeed = Mathf.Clamp(desiredSpeed, 0f, topSpeed);
         float acceleration = desiredSpeed - speedKmH;
         
@@ -503,19 +487,17 @@ public class ArcadeCar : MonoBehaviour
                 Vector3 wsL = transform.TransformPoint(localL);
                 Vector3 wsR = transform.TransformPoint(localR);
 
-                for (int wheelIndex = 0; wheelIndex < 2; wheelIndex++)
-                {
-                    WheelData wheelData = (wheelIndex == WHEEL_LEFT_INDEX) ? axle.wheelDataL : axle.wheelDataR;
-                    Vector3 wsFrom = (wheelIndex == WHEEL_LEFT_INDEX) ? wsL : wsR;
-
-                    Vector3 screenPos = cam.WorldToScreenPoint(wsFrom);
-                    GUI.Label(new Rect(screenPos.x, Screen.height - screenPos.y, 150, 130), wheelData.debugText, style);
-                }
+                Vector3 screenPos = cam.WorldToScreenPoint(wsL);
+                GUI.Label(new Rect(screenPos.x, Screen.height - screenPos.y, 150, 130),
+                    axle.wheelDataL.compression.ToString("F2"), style);
+                screenPos = cam.WorldToScreenPoint(wsR);
+                GUI.Label(new Rect(screenPos.x, Screen.height - screenPos.y, 150, 130),
+                    axle.wheelDataR.compression.ToString("F2"), style);
             }
         }
     }
 
-    void AddForceAtPosition(Vector3 force, Vector3 position)
+    void AddForceAtPosition(in Vector3 force, in Vector3 position)
     {
         rb.AddForceAtPosition(force, position);
         //Debug.DrawRay(position, force, Color.magenta);
@@ -538,11 +520,9 @@ public class ArcadeCar : MonoBehaviour
         return hasHit && nearestHit.distance <= maxDistance;
     }
 
-    void CalculateWheelForces(Axle axle, Vector3 wsDownDirection, WheelData wheelData, Vector3 wsAttachPoint, int wheelIndex, int totalWheelsCount, int numberOfPoweredWheels)
+    void CalculateWheelForces(Axle axle, in Vector3 wsDownDirection, ref WheelData wheelData, in Vector3 wsAttachPoint, int totalWheelsCount, int numberOfPoweredWheels)
     {
         float dt = Time.fixedDeltaTime;
-
-        wheelData.debugText = "--";
 
         // Get wheel world space rotation and axes
         Quaternion localWheelRot = Quaternion.Euler(new Vector3(0.0f, wheelData.yawRad * Mathf.Rad2Deg, 0.0f));
@@ -600,8 +580,6 @@ public class ArcadeCar : MonoBehaviour
         // Negative value means that the spring is elongated.
 
         wheelData.compression = 1.0f - Mathf.Clamp01(suspLenNow / axle.lengthRelaxed);
-
-        wheelData.debugText = wheelData.compression.ToString("F2");
 
         // Hooke's law (springs)
         // F = -k x 
@@ -713,14 +691,8 @@ public class ArcadeCar : MonoBehaviour
         Vector3 wsL = transform.TransformPoint(localL);
         Vector3 wsR = transform.TransformPoint(localR);
 
-        // For each wheel
-        for (int wheelIndex = 0; wheelIndex < 2; wheelIndex++)
-        {
-            WheelData wheelData = (wheelIndex == WHEEL_LEFT_INDEX) ? axle.wheelDataL : axle.wheelDataR;
-            Vector3 wsFrom = (wheelIndex == WHEEL_LEFT_INDEX) ? wsL : wsR;
-
-            CalculateWheelForces(axle, wsDownDirection, wheelData, wsFrom, wheelIndex, totalWheelsCount, numberOfPoweredWheels);
-        }
+        CalculateWheelForces(axle, wsDownDirection, ref axle.wheelDataL, wsL, totalWheelsCount, numberOfPoweredWheels);
+        CalculateWheelForces(axle, wsDownDirection, ref axle.wheelDataR, wsR, totalWheelsCount, numberOfPoweredWheels);
 
         // http://projects.edy.es/trac/edy_vehicle-physics/wiki/TheStabilizerBars
         // Apply "stablizer bar" forces
@@ -787,25 +759,33 @@ public class ArcadeCar : MonoBehaviour
         frontAxle.wheelDataR.yawRad = steerAngleRight;
     }
 
-    void CalculateWheelVisualTransform(Vector3 wsAttachPoint, Vector3 wsDownDirection, Axle axle, WheelData data, int wheelIndex, float visualRotationRad, out Vector3 pos, out Quaternion rot)
+    void CalculateWheelVisualTransform(in Vector3 wsAttachPoint, in Vector3 wsDownDirection, Axle axle, in WheelData data, bool leftWheel, out Vector3 pos, out Quaternion rot)
     {
         float suspCurrentLen = Mathf.Clamp01(1.0f - data.compression) * axle.lengthRelaxed;
 
         pos = wsAttachPoint + wsDownDirection * suspCurrentLen;
 
-        float additionalYaw = 0.0f;
-        float additionalMul = Mathf.Rad2Deg;
-        if (wheelIndex == WHEEL_LEFT_INDEX)
+        float additionalYaw;
+        float additionalMul;
+        if (leftWheel)
         {
             additionalYaw = 180.0f;
             additionalMul = -Mathf.Rad2Deg;
         }
+        else
+        {
+            additionalYaw = 0.0f;
+            additionalMul = Mathf.Rad2Deg;
+        }
 
-        Quaternion localWheelRot = Quaternion.Euler(new Vector3(data.visualRotationRad * additionalMul, additionalYaw + data.yawRad * Mathf.Rad2Deg, 0.0f));
+        Quaternion localWheelRot = Quaternion.Euler(
+            data.visualRotationRad * additionalMul,
+            additionalYaw + data.yawRad * Mathf.Rad2Deg,
+            0.0f);
         rot = transform.rotation * localWheelRot;
     }
 
-    void CalculateWheelRotationFromSpeed(Axle axle, WheelData data, Vector3 wsPos)
+    void CalculateWheelRotationFromSpeed(Axle axle, ref WheelData data, in Vector3 wsPos)
     {
         if (rb == null)
         {
@@ -838,7 +818,8 @@ public class ArcadeCar : MonoBehaviour
             rps = tireLongSpeed / wheelLengthMeters;
         }
             
-        data.rotationsPerSecond = Mathf.SmoothDamp(data.rotationsPerSecond, rps, ref data.rotationsPerSecondSpeed, wheelRotationSmoothing);
+        data.rotationsPerSecond = Mathf.SmoothDamp(data.rotationsPerSecond, rps,
+            ref data.rotationsPerSecondSpeed, wheelRotationSmoothing);
 
         float deltaRot = Mathf.PI * 2.0f * data.rotationsPerSecond * Time.deltaTime;
 
@@ -865,22 +846,22 @@ public class ArcadeCar : MonoBehaviour
 
             if (axle.wheelVisualLeft != null)
             {
-                CalculateWheelVisualTransform(wsL, wsDownDirection, axle, axle.wheelDataL, WHEEL_LEFT_INDEX, axle.wheelDataL.visualRotationRad, out wsPos, out wsRot);
+                CalculateWheelVisualTransform(wsL, wsDownDirection, axle, axle.wheelDataL, true, out wsPos, out wsRot);
                 axle.wheelVisualLeft.transform.SetPositionAndRotation(wsPos, wsRot);
                 axle.wheelVisualLeft.transform.localScale
                     = new Vector3(axle.radius, axle.radius, axle.radius) * axle.visualScale;
 
-                CalculateWheelRotationFromSpeed(axle, axle.wheelDataL, wsPos);
+                CalculateWheelRotationFromSpeed(axle, ref axle.wheelDataL, wsPos);
             }
 
             if (axle.wheelVisualRight != null)
             {
-                CalculateWheelVisualTransform(wsR, wsDownDirection, axle, axle.wheelDataR, WHEEL_RIGHT_INDEX, axle.wheelDataR.visualRotationRad, out wsPos, out wsRot);
+                CalculateWheelVisualTransform(wsR, wsDownDirection, axle, axle.wheelDataR, false, out wsPos, out wsRot);
                 axle.wheelVisualRight.transform.SetPositionAndRotation(wsPos, wsRot);
                 axle.wheelVisualRight.transform.localScale
                     = new Vector3(axle.radius, axle.radius, axle.radius) * axle.visualScale;
 
-                CalculateWheelRotationFromSpeed(axle, axle.wheelDataR, wsPos);
+                CalculateWheelRotationFromSpeed(axle, ref axle.wheelDataR, wsPos);
             }
         }
     }
@@ -902,38 +883,38 @@ public class ArcadeCar : MonoBehaviour
         //draw line to com
         Gizmos.DrawLine(transform.TransformPoint(new Vector3(0.0f, axle.offset.y, axle.offset.x)), transform.TransformPoint(centerOfMass));
 
-        for (int wheelIndex = 0; wheelIndex < 2; wheelIndex++)
-        {
-            WheelData wheelData = (wheelIndex == WHEEL_LEFT_INDEX) ? axle.wheelDataL : axle.wheelDataR;
-            Vector3 wsFrom = (wheelIndex == WHEEL_LEFT_INDEX) ? wsL : wsR;
+        DrawWheelGizmo(ref wsDownDirection, axle, true, axle.wheelDataL, wsL);
+        DrawWheelGizmo(ref wsDownDirection, axle, false, axle.wheelDataL, wsL);
+    }
 
-            Gizmos.color = wheelData.isOnGround ? Color.yellow : axle.debugColor;
-            UnityEditor.Handles.color = Gizmos.color;
+    private void DrawWheelGizmo(ref Vector3 wsDownDirection, Axle axle, bool leftWheel, in WheelData wheelData, in Vector3 wsFrom)
+    {
+        Gizmos.color = wheelData.isOnGround ? Color.yellow : axle.debugColor;
+        UnityEditor.Handles.color = Gizmos.color;
 
-            float suspCurrentLen = Mathf.Clamp01(1.0f - wheelData.compression) * axle.lengthRelaxed;
+        float suspCurrentLen = Mathf.Clamp01(1.0f - wheelData.compression) * axle.lengthRelaxed;
 
-            Vector3 wsTo = wsFrom + wsDownDirection * suspCurrentLen;
+        Vector3 wsTo = wsFrom + wsDownDirection * suspCurrentLen;
 
-            // Draw suspension
-            Gizmos.DrawLine(wsFrom, wsTo);
+        // Draw suspension
+        Gizmos.DrawLine(wsFrom, wsTo);
 
-            Quaternion localWheelRot = Quaternion.Euler(new Vector3(0.0f, wheelData.yawRad * Mathf.Rad2Deg, 0.0f));
-            Quaternion wsWheelRot = transform.rotation * localWheelRot;
+        Quaternion localWheelRot = Quaternion.Euler(new Vector3(0.0f, wheelData.yawRad * Mathf.Rad2Deg, 0.0f));
+        Quaternion wsWheelRot = transform.rotation * localWheelRot;
 
-            Vector3 localAxle = (wheelIndex == WHEEL_LEFT_INDEX) ? Vector3.left : Vector3.right;
-            Vector3 wsAxle = wsWheelRot * localAxle;
-            Vector3 wsForward = wsWheelRot * Vector3.forward;
+        Vector3 localAxle = leftWheel ? Vector3.left : Vector3.right;
+        Vector3 wsAxle = wsWheelRot * localAxle;
+        Vector3 wsForward = wsWheelRot * Vector3.forward;
 
-            // Draw wheel axle
-            Gizmos.DrawLine(wsTo, wsTo + wsAxle * 0.1f);
-            Gizmos.DrawLine(wsTo, wsTo + wsForward * axle.radius);
+        // Draw wheel axle
+        Gizmos.DrawLine(wsTo, wsTo + wsAxle * 0.1f);
+        Gizmos.DrawLine(wsTo, wsTo + wsForward * axle.radius);
 
-            // Draw wheel
-            UnityEditor.Handles.DrawWireDisc(wsTo, wsAxle, axle.radius);
+        // Draw wheel
+        UnityEditor.Handles.DrawWireDisc(wsTo, wsAxle, axle.radius);
 
-            UnityEditor.Handles.DrawWireDisc(wsTo + wsAxle * wheelWidth, wsAxle, axle.radius);
-            UnityEditor.Handles.DrawWireDisc(wsTo - wsAxle * wheelWidth, wsAxle, axle.radius);
-        }
+        UnityEditor.Handles.DrawWireDisc(wsTo + wsAxle * wheelWidth, wsAxle, axle.radius);
+        UnityEditor.Handles.DrawWireDisc(wsTo - wsAxle * wheelWidth, wsAxle, axle.radius);
     }
 
     void OnDrawGizmos()
