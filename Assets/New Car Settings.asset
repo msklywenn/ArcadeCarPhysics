@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: New Car Settings
   m_EditorClassIdentifier: 
   CenterOfMass: {x: 0, y: -0.48, z: 0.38}
+  MaxSpeed: 200
   Forward:
     TopSpeed: 36.11111
     Acceleration: 0.8
@@ -21,14 +22,13 @@ MonoBehaviour:
     TopSpeed: 11.111112
     Acceleration: 0.8
     Duration: 3
-  MaxSpeed: 200
   SteeringSpeed: 60
   SteeringResetSpeed: 50
   SlowSteerAngleLimit: 40
   FastSteerAngleLimit: 4
-  SlowFastSteerCurve: 0.9
-  FlightStabilizationForce: 8
-  FlightStabilizationDamping: 0
+  SlowFastSteerCurve: 0.95
+  FlightStabilizationForce: 6
+  FlightStabilizationDamping: 0.7
   DownForceIntensity: 0.7
   DownForce: 10
   BurnRotationSpeed: 5
@@ -54,8 +54,10 @@ MonoBehaviour:
     LateralFriction: 0.6
     RollingFriction: 0.005
     BrakeForce: 2
-    Stiffness: 8000
+    Stiffness: 6000
     Damping: 3000
     Restitution: 1
     RelaxedLength: 0.45
     AntiRollForce: 10000
+  AxleSeparation: 2.8
+  FrontWheelsSeparation: 1.55

@@ -127,5 +127,21 @@ public class CarSettings : ScriptableObject
         RelaxedLength = 0.45f,
         AntiRollForce = 10000,
     };
+
+    [SerializeField] public float AxleSeparation;
+    [SerializeField] public float FrontWheelsSeparation;
+
+    void OnValidate()
+    {
+        // Calculate our chassis assuming uniform scale
+        Vector3 frontOffset = new Vector3(0.0f, Front.Offset.y, Front.Offset.x);
+        Vector3 rearOffset = new Vector3(0.0f, Rear.Offset.y, Rear.Offset.x);
+        AxleSeparation = Vector3.Distance(frontOffset, rearOffset);
+
+        Vector3 leftWheel = new Vector3(Front.Width * -0.5f, Front.Offset.y, Front.Offset.x);
+        Vector3 rightWheel = new Vector3(Front.Width * 0.5f, Front.Offset.y, Front.Offset.x);
+        FrontWheelsSeparation = Vector3.Distance(leftWheel, rightWheel);
+
+    }
 }
 

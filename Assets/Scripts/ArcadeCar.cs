@@ -605,30 +605,16 @@ public class ArcadeCar : MonoBehaviour
 
     void CalculateAckermannSteering()
     {
-        // Copy desired steering
-        float steerAngleRad = steerAngle * Mathf.Deg2Rad;
-        Front.wheelDataL.yawRad = steerAngleRad;
-        Front.wheelDataR.yawRad = steerAngleRad;
-
-        // TODO: does not need to be done in world space, doesn't even need to build vectors for anything
-        // These are just two constants?
-        // Calculate our chassis (remove scale) <= just don't scale!
-        Vector3 frontOffset = new Vector3(0.0f, Settings.Front.Offset.y, Settings.Front.Offset.x);
-        Vector3 rearOffset = new Vector3(0.0f, Settings.Rear.Offset.y, Settings.Rear.Offset.x);
-        Vector3 axleDiff = transform.TransformPoint(frontOffset) - transform.TransformPoint(rearOffset); // TODO: just sub then transform ?
-        float axleSeparation = axleDiff.magnitude;
-
-        Vector3 leftWheel = new Vector3(Settings.Front.Width * -0.5f, Settings.Front.Offset.y, Settings.Front.Offset.x);
-        Vector3 rightWheel = new Vector3(Settings.Front.Width * 0.5f, Settings.Front.Offset.y, Settings.Front.Offset.x);
-        Vector3 wheelDiff = transform.TransformPoint(leftWheel) - transform.TransformPoint(rightWheel); // TODO: just sub then transform ?
-        float wheelsSeparation = wheelDiff.magnitude;
+        Debug.Assert(Mathf.Approximately(transform.lossyScale.x, 1f)
+            && Mathf.Approximately(transform.lossyScale.y, 1f)
+            && Mathf.Approximately(transform.lossyScale.z, 1f));
 
         // Get turning circle radius for steering angle input
-        float turningCircleRadius = axleSeparation / Mathf.Tan(steerAngle * Mathf.Deg2Rad);
+        float turningCircleRadius = Settings.AxleSeparation / Mathf.Tan(steerAngle * Mathf.Deg2Rad);
 
         // Make front inside tire turn sharper and outside tire less sharp based on turning circle radius
-        float steerAngleLeft = Mathf.Atan(axleSeparation / (turningCircleRadius + (wheelsSeparation / 2)));
-        float steerAngleRight = Mathf.Atan(axleSeparation / (turningCircleRadius - (wheelsSeparation / 2)));
+        float steerAngleLeft = Mathf.Atan(Settings.AxleSeparation / (turningCircleRadius + (Settings.FrontWheelsSeparation / 2f)));
+        float steerAngleRight = Mathf.Atan(Settings.AxleSeparation / (turningCircleRadius - (Settings.FrontWheelsSeparation / 2f)));
 
         Front.wheelDataL.yawRad = steerAngleLeft;
         Front.wheelDataR.yawRad = steerAngleRight;
