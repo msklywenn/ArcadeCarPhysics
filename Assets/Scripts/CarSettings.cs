@@ -83,10 +83,7 @@ public class CarSettings : ScriptableObject
 
     [Header("Other")]
     [Tooltip("Stabilization in flight (torque)")]
-    public float FlightStabilizationForce = 8.0f;
-
-    [Tooltip("Stabilization in flight (Ang velocity damping)")]
-    public float FlightStabilizationDamping = 0.0f;
+    public float FlightStabilizationForce = -250.0f;
 
     public float DownForceIntensity = 0.7f;
 

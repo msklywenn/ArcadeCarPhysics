@@ -314,38 +314,13 @@ public class ArcadeCar : MonoBehaviour
             || Rear.wheelDataL.isOnGround || Rear.wheelDataR.isOnGround;
     }
 
-    // TODO: this is probably GPL code so replace with my previous solution
     private void KeepUpwards()
     {
-        // Try to keep vehicle parallel to the ground while jumping
-        Vector3 carUp = transform.TransformDirection(new Vector3(0.0f, 1.0f, 0.0f));
-        Vector3 worldUp = new Vector3(0.0f, 1.0f, 0.0f);
+        Vector3 up = transform.worldToLocalMatrix * Vector3.up;
 
-        // Flight stabilization from
-        // https://github.com/supertuxkart/stk-code/blob/master/src/physics/btKart.cpp#L455
-
-        // Length of axis depends on the angle - i.e. the further awat
-        // the kart is from being upright, the larger the applied impulse
-        // will be, resulting in fast changes when the kart is on its
-        // side, but not overcompensating (and therefore shaking) when
-        // the kart is not much away from being upright.
-        Vector3 axis = Vector3.Cross(carUp, worldUp);
-        //axis.Normalize ();
-
-        float mass = rb.mass;
-
-        // angular velocity damping
-        Vector3 angVel = rb.angularVelocity;
-
-        Vector3 angVelDamping = angVel;
-        angVelDamping.y = 0.0f;
-        angVelDamping *= Mathf.Clamp01(Settings.FlightStabilizationDamping * Time.fixedDeltaTime);
-
-        //Debug.Log(string.Format("Ang {0}, Damping {1}", angVel, angVelDamping));
-        rb.angularVelocity = angVel - angVelDamping;
-
-        // in flight roll stabilization
-        rb.AddTorque(Settings.FlightStabilizationForce * mass * axis);
+        Vector3 forceUp = new Vector3() { z = up.x * Settings.FlightStabilizationForce * Time.fixedDeltaTime };
+        forceUp = transform.TransformDirection(forceUp);
+        rb.AddTorque(forceUp, ForceMode.Acceleration);
     }
 
     private void Downforce()

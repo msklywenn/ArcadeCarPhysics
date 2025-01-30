@@ -27,8 +27,7 @@ MonoBehaviour:
   SlowSteerAngleLimit: 40
   FastSteerAngleLimit: 4
   SlowFastSteerCurve: 0.95
-  FlightStabilizationForce: 6
-  FlightStabilizationDamping: 0.7
+  FlightStabilizationForce: -250
   DownForceIntensity: 0.7
   DownForce: 10
   BurnRotationSpeed: 5
@@ -40,7 +39,7 @@ MonoBehaviour:
     Radius: 0.3
     LateralFriction: 0.6
     RollingFriction: 0.005
-    BrakeForce: 14
+    BrakeForce: 8
     Stiffness: 10000
     Damping: 3000
     Restitution: 1
