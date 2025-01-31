@@ -484,15 +484,16 @@ public class ArcadeCar : MonoBehaviour
         // Remove friction along roll-direction of wheel 
         Vector3 longitudinalForce = Vector3.Dot(frictionForce, c_fwd) * c_fwd;
 
-        bool shouldPark = Mathf.Abs(GetSpeed()) < Settings.AutoParkThreshold;
         bool isAccelerating = Mathf.Abs(accelerationForceMagnitude) > 0.01f;
+        bool shouldPark = Mathf.Abs(GetSpeed()) < Settings.AutoParkThreshold && !isAccelerating;
 
         // Apply braking force or rolling resistance force or nothing
         if (shouldPark || brake > 0f)
         {
             float mag = longitudinalForce.magnitude;
             float force = mag > 0f ? Mathf.Clamp(settings.BrakeForce, 0.0f, mag) / mag : 0f;
-            longitudinalForce *= 1f - brake * force;
+            float intensity = shouldPark ? 1f : brake;
+            longitudinalForce *= 1f - intensity * force;
         }
         else if (!isAccelerating)
         {
@@ -504,25 +505,24 @@ public class ArcadeCar : MonoBehaviour
         if (debugDraw)
         {
             Debug.DrawRay(wheelData.touchPoint.point, frictionForce, Color.red);
-            Debug.DrawRay(wheelData.touchPoint.point, (frictionForce - longitudinalForce), Color.blue);
+            Debug.DrawRay(wheelData.touchPoint.point, frictionForce - longitudinalForce, Color.blue);
             Debug.DrawRay(wheelData.touchPoint.point, longitudinalForce, Color.white);
+        }
+
+        // Engine force
+        if (settings.IsPowered && isAccelerating)
+        {
+            Vector3 engineForce = c_fwd * accelerationForceMagnitude / numberOfPoweredWheels / dt;
+            longitudinalForce -= engineForce;
+
+            if (debugDraw)
+                Debug.DrawRay(wheelData.touchPoint.point, engineForce, Color.green);
         }
 
         frictionForce -= longitudinalForce;
             
         // Apply resulting force
         rb.AddForceAtPosition(frictionForce, wheelData.touchPoint.point, ForceMode.Acceleration);
-
-        // Engine force
-        if (settings.IsPowered && isAccelerating)
-        {
-            Vector3 accForcePoint = wheelData.touchPoint.point - (wsDownDirection * 0.2f);
-            Vector3 engineForce = c_fwd * accelerationForceMagnitude / numberOfPoweredWheels / dt;
-            rb.AddForceAtPosition(engineForce, accForcePoint, ForceMode.Acceleration);
-
-            if (debugDraw)
-                Debug.DrawRay(accForcePoint, engineForce, Color.green);
-        }
     }
 
     void CalculateAxleForces(in CarSettings.Axle settings, ref Axle axle, int totalWheelsCount, int numberOfPoweredWheels)

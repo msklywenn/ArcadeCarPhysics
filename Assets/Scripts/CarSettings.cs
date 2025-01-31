@@ -52,7 +52,7 @@ public class CarSettings : ScriptableObject
         [Tooltip("Time to reach top speed")]
         [Min(0.01f)] public float Duration;
 
-        public float GetAccelerationForceMagnitude(float speed, float dt)
+        public readonly float GetAccelerationForceMagnitude(float speed, float dt)
         {
             float t = Duration * Utilities.EasyCurveInverse(speed / TopSpeed, Acceleration);
             float desiredSpeed = TopSpeed * Utilities.EasyCurve((t + dt) / Duration, Acceleration);
@@ -88,7 +88,7 @@ public class CarSettings : ScriptableObject
     public float DownForce = 10f;
 
     [Space]
-    [Tooltip("Speed below which the car automatically breaks. Avoids rolling downhill.")]
+    [Tooltip("Speed below which the car automatically brakes. Avoids rolling downhill.")]
     [Speed] public float AutoParkThreshold = 0.1f;
 
     [Space]
