@@ -478,7 +478,11 @@ public class ArcadeCar : MonoBehaviour
         if (debugDraw)
             Debug.DrawRay(wheelData.touchPoint.point, slideVelocity, Color.red);
 
-        float lateralFriction = Mathf.Clamp01(settings.LateralFriction);
+        float wheelFriction = Mathf.Clamp01(settings.LateralFriction);
+        float groundFriction = wheelData.touchPoint.collider != null
+            && wheelData.touchPoint.collider.sharedMaterial != null
+            ? wheelData.touchPoint.collider.sharedMaterial.staticFriction : 0.6f;
+        float lateralFriction = 0.5f * (wheelFriction + groundFriction);
 
         // Simulate perfect static friction
         Vector3 frictionForce = slidingForce * -lateralFriction;
