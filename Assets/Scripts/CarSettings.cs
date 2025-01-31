@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using UnityEngine;
 
 [CreateAssetMenu]
@@ -103,11 +104,11 @@ public class CarSettings : ScriptableObject
         LateralFriction = 0.6f,
         RollingFriction = 0.005f,
         BrakeForce = 14,
-        Stiffness = 10000,
-        Damping = 3000,
+        Stiffness = 6.5f,
+        Damping = 2f,
         Restitution = 1f,
         RelaxedLength = 0.45f,
-        AntiRollForce = 10000,
+        AntiRollForce = 6.5f,
     };
     public Axle Rear = new Axle
     {
@@ -118,15 +119,15 @@ public class CarSettings : ScriptableObject
         LateralFriction = 0.6f,
         RollingFriction = 0.005f,
         BrakeForce = 2,
-        Stiffness = 8000,
-        Damping = 3000,
+        Stiffness = 4f,
+        Damping = 2f,
         Restitution = 1f,
         RelaxedLength = 0.45f,
         AntiRollForce = 10000,
     };
 
-    [SerializeField] public float AxleSeparation;
-    [SerializeField] public float FrontWheelsSeparation;
+    [SerializeField, HideInInspector] public float AxleSeparation;
+    [SerializeField, HideInInspector] public float FrontWheelsSeparation;
 
     void OnValidate()
     {
@@ -138,7 +139,6 @@ public class CarSettings : ScriptableObject
         Vector3 leftWheel = new Vector3(Front.Width * -0.5f, Front.Offset.y, Front.Offset.x);
         Vector3 rightWheel = new Vector3(Front.Width * 0.5f, Front.Offset.y, Front.Offset.x);
         FrontWheelsSeparation = Vector3.Distance(leftWheel, rightWheel);
-
     }
 }
 
