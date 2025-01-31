@@ -40,11 +40,11 @@ MonoBehaviour:
     LateralFriction: 0.6
     RollingFriction: 0.005
     BrakeForce: 8
-    Stiffness: 10000
-    Damping: 3000
+    Stiffness: 6.5
+    Damping: 2
     Restitution: 1
     RelaxedLength: 0.45
-    AntiRollForce: 10000
+    AntiRollForce: 6.5
   Rear:
     Width: 1.55
     Offset: {x: -1.29, y: 0}
@@ -53,10 +53,10 @@ MonoBehaviour:
     LateralFriction: 0.6
     RollingFriction: 0.005
     BrakeForce: 2
-    Stiffness: 6000
-    Damping: 3000
+    Stiffness: 4
+    Damping: 2
     Restitution: 1
     RelaxedLength: 0.45
-    AntiRollForce: 10000
+    AntiRollForce: 6.5
   AxleSeparation: 2.8
   FrontWheelsSeparation: 1.55

@@ -360,12 +360,6 @@ public class ArcadeCar : MonoBehaviour
         }
     }
 
-    void AddForceAtPosition(in Vector3 force, in Vector3 position)
-    {
-        rb.AddForceAtPosition(force, position);
-        //Debug.DrawRay(position, force, Color.magenta);
-    }
-
     bool RayCast(in Ray ray, float maxDistance, ref RaycastHit nearestHit)
     {
         int numHits = Physics.RaycastNonAlloc(ray, wheelRayHits, maxDistance, CollisionLayers, QueryTriggerInteraction.Ignore);
@@ -464,9 +458,9 @@ public class ArcadeCar : MonoBehaviour
 
         // Apply suspension force
         Vector3 suspForce = wsDownDirection * suspForceMag;
-        AddForceAtPosition(suspForce, wheelData.touchPoint.point);
+        rb.AddForceAtPosition(suspForce, wheelData.touchPoint.point, ForceMode.Acceleration);
         if (debugDraw)
-            Debug.DrawRay(wheelData.touchPoint.point, suspForce / rb.mass, Color.yellow);
+            Debug.DrawRay(wheelData.touchPoint.point, suspForce, Color.yellow);
 
         //
         // Calculate friction forces
@@ -529,14 +523,14 @@ public class ArcadeCar : MonoBehaviour
         frictionForce -= longitudinalForce;
             
         // Apply resulting force
-        AddForceAtPosition(frictionForce, wheelData.touchPoint.point);
+        rb.AddForceAtPosition(frictionForce, wheelData.touchPoint.point);
 
         // Engine force
         if (settings.IsPowered && Mathf.Abs(accelerationForceMagnitude) > 0.01f)
         {
             Vector3 accForcePoint = wheelData.touchPoint.point - (wsDownDirection * 0.2f);
             Vector3 engineForce = c_fwd * accelerationForceMagnitude / numberOfPoweredWheels / dt;
-            AddForceAtPosition(engineForce, accForcePoint);
+            rb.AddForceAtPosition(engineForce, accForcePoint);
 
             if (debugDraw)
                 Debug.DrawRay(accForcePoint, engineForce / rb.mass, Color.green);
@@ -565,16 +559,16 @@ public class ArcadeCar : MonoBehaviour
         float antiRollForce = (travelL - travelR) * settings.AntiRollForce;
         if (axle.wheelDataL.isOnGround)
         {
-            AddForceAtPosition(wsDownDirection * antiRollForce, axle.wheelDataL.touchPoint.point);
+            rb.AddForceAtPosition(wsDownDirection * antiRollForce, axle.wheelDataL.touchPoint.point, ForceMode.Acceleration);
             if (debugDraw)
-                Debug.DrawRay(axle.wheelDataL.touchPoint.point, wsDownDirection * antiRollForce / rb.mass, Color.magenta);
+                Debug.DrawRay(axle.wheelDataL.touchPoint.point, wsDownDirection * antiRollForce, Color.green);
         }
 
         if (axle.wheelDataR.isOnGround)
         {
-            AddForceAtPosition(wsDownDirection * -antiRollForce, axle.wheelDataR.touchPoint.point);
+            rb.AddForceAtPosition(wsDownDirection * -antiRollForce, axle.wheelDataR.touchPoint.point, ForceMode.Acceleration);
             if (debugDraw)
-                Debug.DrawRay(axle.wheelDataR.touchPoint.point, wsDownDirection * -antiRollForce / rb.mass, Color.magenta);
+                Debug.DrawRay(axle.wheelDataR.touchPoint.point, wsDownDirection * -antiRollForce, Color.green);
         }
     }
 
