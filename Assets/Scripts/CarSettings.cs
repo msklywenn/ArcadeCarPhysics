@@ -74,23 +74,24 @@ public class CarSettings : ScriptableObject
     public Engine Reverse = new Engine { TopSpeed = 40 / 3.6f, Acceleration = 0.8f, Duration = 3f };
 
     [Header("Steering")]
-    public float SteeringSpeed = 60f;
-    public float SteeringResetSpeed = 50f;
-    // x - speed in km/h
-    // y - angle in degrees
-    public float SlowSteerAngleLimit = 40f;
-    public float FastSteerAngleLimit = 4f;
-    public float SlowFastSteerCurve = 0.9f;//TODO: a better name...
+    public float SteeringSmooth = 0.2f;
+    public float SteerAngleLimitAtLowSpeed = 40f;
+    public float SteerAngleLimitAtHighSpeed = 4f;
+    public float SteerAngleLimitCurve = 0.9f;
 
     [Header("Other")]
     [Tooltip("Stabilization in flight (torque)")]
     public float FlightStabilizationForce = -250.0f;
 
+    [Space]
     public float DownForceIntensity = 0.7f;
-
-    [Tooltip("Downforce")]
     public float DownForce = 10f;
 
+    [Space]
+    [Tooltip("Speed below which the car automatically breaks. Avoids rolling downhill.")]
+    [Speed] public float AutoParkThreshold = 0.1f;
+
+    [Space]
     [Tooltip("Rotation speed when braking and accelerating at the same time")]
     public float BurnRotationSpeed = 5f;
     public float WheelRotationSmoothing = 0.1f;

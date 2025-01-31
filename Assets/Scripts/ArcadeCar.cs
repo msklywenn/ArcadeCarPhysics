@@ -100,7 +100,6 @@ public class ArcadeCar : MonoBehaviour
 
     [Header("Input")] // TODO: move me to external component
     public bool controllable = true;
-    [Range(0, 1)] public float Deadzone = 0.01f;
 
     [Header("Debug")]
     public bool debugDraw = true;
@@ -108,6 +107,7 @@ public class ArcadeCar : MonoBehaviour
     //////////////////////////////////////////////////////////////////////////////////////////////////////
 
     float steerAngle;
+    float steerAngleVelocity;
 
     float accelerator = 0f; // -1..1, -1 is reverse, 1 is forward
     float brake = 0f; // 0..1
@@ -172,30 +172,18 @@ public class ArcadeCar : MonoBehaviour
         if (accelerator >= 0f)
             return accelerator * Settings.Forward.GetAccelerationForceMagnitude(speed, dt);
         else
-            return accelerator * -Settings.Reverse.GetAccelerationForceMagnitude(-speed, dt);
+            return accelerator * Settings.Reverse.GetAccelerationForceMagnitude(-speed, dt);
     }
 
     void Steering(float steeringWheel, float speed)
     {
         speed = Mathf.Abs(speed);
-        float steering;
-        if (Mathf.Abs(steeringWheel) > Deadzone)
-        {
-            steering = steeringWheel * Settings.SteeringSpeed * Time.fixedDeltaTime;
-        }
-        else
-        {
-            float resetSign = -Mathf.Sign(steerAngle);
-            float reset = Mathf.Min(Mathf.Abs(steerAngle), Settings.SteeringResetSpeed * Time.fixedDeltaTime);
-            steering = reset * resetSign;
-        }
+        float steerLimit = Mathf.Lerp(Settings.SteerAngleLimitAtLowSpeed, Settings.SteerAngleLimitAtHighSpeed,
+            Utilities.EasyCurve(speed / Settings.MaxSpeed, Settings.SteerAngleLimitCurve));
+        float steerTo = steeringWheel * steerLimit;
 
-        float newSteerAngle = steerAngle + steering;
-        float sgn = Mathf.Sign(newSteerAngle);
-        float steerLimit = Mathf.Lerp(Settings.SlowSteerAngleLimit, Settings.FastSteerAngleLimit, 
-            Utilities.EasyCurve(speed / Settings.MaxSpeed, Settings.SlowFastSteerCurve));
-        newSteerAngle = Mathf.Min(Math.Abs(newSteerAngle), steerLimit) * sgn;
-        steerAngle = newSteerAngle;
+        steerAngle = Mathf.SmoothDamp(steerAngle, steerTo, ref steerAngleVelocity,
+            Settings.SteeringSmooth, float.MaxValue, Time.fixedDeltaTime);
     }
 
     void UpdateInput()
@@ -216,15 +204,19 @@ public class ArcadeCar : MonoBehaviour
         brake = 0f;
 
         float speed = GetSpeed();
-        if (speed > -0.5f)
+        if (speed > Settings.AutoParkThreshold)
         {
-            accelerator = v > Deadzone ? Mathf.InverseLerp(Deadzone, 1f, v) : 0f;
-            brake = Mathf.InverseLerp(-Deadzone, -1, v);
+            accelerator = Mathf.Max(v, 0f);
+            brake = -Mathf.Min(v, 0f);
+        }
+        else if (speed < -Settings.AutoParkThreshold)
+        {
+            accelerator = Mathf.Min(v, 0);
+            brake = Mathf.Max(v, 0f);
         }
         else
         {
-            accelerator = v < -Deadzone ? -Mathf.InverseLerp(-Deadzone, -1f, v) : 0f;
-            brake = Mathf.InverseLerp(Deadzone, 1, v);
+            accelerator = v;
         }
 
         if (isBrakeNow)
@@ -492,7 +484,7 @@ public class ArcadeCar : MonoBehaviour
         // Remove friction along roll-direction of wheel 
         Vector3 longitudinalForce = Vector3.Dot(frictionForce, c_fwd) * c_fwd;
 
-        bool shouldPark = Mathf.Abs(GetSpeed()) < 0.1f;
+        bool shouldPark = Mathf.Abs(GetSpeed()) < Settings.AutoParkThreshold;
         bool isAccelerating = Mathf.Abs(accelerationForceMagnitude) > 0.01f;
 
         // Apply braking force or rolling resistance force or nothing
