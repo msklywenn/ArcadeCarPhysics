@@ -100,7 +100,7 @@ public class ArcadeCar : MonoBehaviour
 
     [Header("Input")] // TODO: move me to external component
     public bool controllable = true;
-    [Range(0, 1)] public float SteeringDeadzone = 0.01f;
+    [Range(0, 1)] public float Deadzone = 0.01f;
 
     [Header("Debug")]
     public bool debugDraw = true;
@@ -109,10 +109,9 @@ public class ArcadeCar : MonoBehaviour
 
     float steerAngle;
 
-    bool isBrake = false;
-    bool isHandBrake = false;
-    bool isAcceleration = false;
-    bool isReverseAcceleration = false;
+    float accelerator = 0f; // -1..1, -1 is reverse, 1 is forward
+    float brake = 0f; // 0..1
+
     float accelerationForceMagnitude = 0.0f;
     Rigidbody rb = null;
 
@@ -167,23 +166,20 @@ public class ArcadeCar : MonoBehaviour
 
     float CalcAccelerationForceMagnitude()
     {
-        if (!isAcceleration && !isReverseAcceleration)
-            return 0.0f;
-
         float speed = GetSpeed();
         float dt = Time.fixedDeltaTime;
 
-        if (isAcceleration)
-            return Settings.Forward.GetAccelerationForceMagnitude(speed, dt);
+        if (accelerator >= 0f)
+            return accelerator * Settings.Forward.GetAccelerationForceMagnitude(speed, dt);
         else
-            return -Settings.Reverse.GetAccelerationForceMagnitude(-speed, dt);
+            return accelerator * -Settings.Reverse.GetAccelerationForceMagnitude(-speed, dt);
     }
 
     void Steering(float steeringWheel, float speed)
     {
         speed = Mathf.Abs(speed);
         float steering;
-        if (Mathf.Abs(steeringWheel) > SteeringDeadzone)
+        if (Mathf.Abs(steeringWheel) > Deadzone)
         {
             steering = steeringWheel * Settings.SteeringSpeed * Time.fixedDeltaTime;
         }
@@ -207,7 +203,6 @@ public class ArcadeCar : MonoBehaviour
         float v = 0f;
         float wheel = 0f;
         bool isBrakeNow = false;
-        bool isHandBrakeNow = false;
 
         if (controllable)
         {
@@ -215,18 +210,25 @@ public class ArcadeCar : MonoBehaviour
             wheel = Input.GetAxis("Horizontal");
             if (Input.GetKey(KeyCode.R)) 
                 ResetToValidPosition();
-            isHandBrakeNow = Input.GetKey(KeyCode.Space);
             isBrakeNow = Input.GetKey(KeyCode.RightControl) || Input.GetKey(KeyCode.LeftControl);
         }
 
+        brake = 0f;
+
         float speed = GetSpeed();
-        isAcceleration = v > 0.4f && speed > -0.5f;
-        isReverseAcceleration = v < -0.4f && speed < 0.5f;
+        if (speed > -0.5f)
+        {
+            accelerator = v > Deadzone ? Mathf.InverseLerp(Deadzone, 1f, v) : 0f;
+            brake = Mathf.InverseLerp(-Deadzone, -1, v);
+        }
+        else
+        {
+            accelerator = v < -Deadzone ? -Mathf.InverseLerp(-Deadzone, -1f, v) : 0f;
+            brake = Mathf.InverseLerp(Deadzone, 1, v);
+        }
 
-        isBrake = isBrakeNow;
-
-        // hand brake + acceleration = power slide
-        isHandBrake = isHandBrakeNow && !isAcceleration && !isReverseAcceleration;
+        if (isBrakeNow)
+            brake = 1f;
 
         if (controllable)
             Steering(wheel, speed);
@@ -490,22 +492,17 @@ public class ArcadeCar : MonoBehaviour
         // Remove friction along roll-direction of wheel 
         Vector3 longitudinalForce = Vector3.Dot(frictionForce, c_fwd) * c_fwd;
 
+        bool shouldPark = Mathf.Abs(GetSpeed()) < 0.1f;
+        bool isAccelerating = Mathf.Abs(accelerationForceMagnitude) > 0.01f;
+
         // Apply braking force or rolling resistance force or nothing
-        bool stop = Mathf.Abs(GetSpeed()) < 0.1f;
-        if (stop || isBrake || isHandBrake)
+        if (shouldPark || brake > 0f)
         {
             float mag = longitudinalForce.magnitude;
-            float brakeForce = mag > 0f ? Mathf.Clamp(settings.BrakeForce, 0.0f, mag) / mag : 0f;
-
-            if (isHandBrake)
-            {
-                // hand brake are not powerful enough ;)
-                brakeForce *= 0.8f;
-            }
-
-            longitudinalForce *= 1f - brakeForce;
+            float force = mag > 0f ? Mathf.Clamp(settings.BrakeForce, 0.0f, mag) / mag : 0f;
+            longitudinalForce *= 1f - brake * force;
         }
-        else if (!isAcceleration && !isReverseAcceleration)
+        else if (!isAccelerating)
         {
             // Apply rolling-friction (automatic slow-down) only if player don't press the accelerator
             float rollingK = 1.0f - Mathf.Clamp01(settings.RollingFriction);
@@ -525,7 +522,7 @@ public class ArcadeCar : MonoBehaviour
         rb.AddForceAtPosition(frictionForce, wheelData.touchPoint.point, ForceMode.Acceleration);
 
         // Engine force
-        if (settings.IsPowered && Mathf.Abs(accelerationForceMagnitude) > 0.01f)
+        if (settings.IsPowered && isAccelerating)
         {
             Vector3 accForcePoint = wheelData.touchPoint.point - (wsDownDirection * 0.2f);
             Vector3 engineForce = c_fwd * accelerationForceMagnitude / numberOfPoweredWheels / dt;
@@ -625,9 +622,9 @@ public class ArcadeCar : MonoBehaviour
         }
 
         float rps;
-        if (axleSettings.IsPowered && isBrake && (isAcceleration || isReverseAcceleration))
+        if (axleSettings.IsPowered && brake > 0f && Mathf.Abs(accelerator) > 0f)
         {
-            rps = isAcceleration ? settings.BurnRotationSpeed : -settings.BurnRotationSpeed;
+            rps = accelerator * settings.BurnRotationSpeed;
         }
         else
         {

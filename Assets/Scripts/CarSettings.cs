@@ -68,7 +68,7 @@ public class CarSettings : ScriptableObject
     public Vector3 CenterOfMass = new Vector3(0f, -0.48f, 0.38f);
 
     [Tooltip("Only used as a reference for downforce and steering settings")]
-    public float MaxSpeed = 200f; // used only for settings
+    [Speed] public float MaxSpeed = 200f / 3.6f; // used only for settings
 
     public Engine Forward = new Engine { TopSpeed = 130 / 3.6f, Acceleration = 0.8f, Duration = 10f };
     public Engine Reverse = new Engine { TopSpeed = 40 / 3.6f, Acceleration = 0.8f, Duration = 3f };
