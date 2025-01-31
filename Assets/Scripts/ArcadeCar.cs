@@ -1,8 +1,6 @@
 ﻿using System;
 using UnityEngine;
 
-// TODO remove all reference to masses, work with accelerations directly
-
 static class Utilities
 {
     public static float EasyCurve(float t, float intensity)
@@ -176,9 +174,9 @@ public class ArcadeCar : MonoBehaviour
         float dt = Time.fixedDeltaTime;
 
         if (isAcceleration)
-            return Settings.Forward.GetAccelerationForceMagnitude(speed, dt) * rb.mass;
+            return Settings.Forward.GetAccelerationForceMagnitude(speed, dt);
         else
-            return -Settings.Reverse.GetAccelerationForceMagnitude(-speed, dt) * rb.mass;
+            return -Settings.Reverse.GetAccelerationForceMagnitude(-speed, dt);
     }
 
     void Steering(float steeringWheel, float speed)
@@ -332,9 +330,7 @@ public class ArcadeCar : MonoBehaviour
 
         float downForceAmount = 1f - Utilities.EasyCurve(1f - speedKmH / Settings.MaxSpeed, Settings.DownForceIntensity);
 
-        float mass = rb.mass;
-
-        rb.AddForce(Settings.DownForce * downForceAmount * mass * carDown);
+        rb.AddForce(Settings.DownForce * downForceAmount * carDown, ForceMode.Acceleration);
     }
 
     void OnGUI()
@@ -478,10 +474,10 @@ public class ArcadeCar : MonoBehaviour
         Vector3 slideVelocity = Vector3.ProjectOnPlane(wheelVelocity, c_up);
 
         // Calculate current sliding force
-        Vector3 slidingForce = rb.mass / dt / totalWheelsCount * slideVelocity;
+        Vector3 slidingForce = 1f / dt / totalWheelsCount * slideVelocity;
 
         if (debugDraw)
-            Debug.DrawRay(wheelData.touchPoint.point, slideVelocity / rb.mass, Color.red);
+            Debug.DrawRay(wheelData.touchPoint.point, slideVelocity, Color.red);
 
         float lateralFriction = Mathf.Clamp01(settings.LateralFriction);
 
@@ -496,7 +492,7 @@ public class ArcadeCar : MonoBehaviour
         if (stop || isBrake || isHandBrake)
         {
             float mag = longitudinalForce.magnitude;
-            float brakeForce = mag > 0f ? Mathf.Clamp(settings.BrakeForce * rb.mass, 0.0f, mag) / mag : 0f;
+            float brakeForce = mag > 0f ? Mathf.Clamp(settings.BrakeForce, 0.0f, mag) / mag : 0f;
 
             if (isHandBrake)
             {
@@ -515,25 +511,25 @@ public class ArcadeCar : MonoBehaviour
 
         if (debugDraw)
         {
-            Debug.DrawRay(wheelData.touchPoint.point, frictionForce / rb.mass, Color.red);
-            Debug.DrawRay(wheelData.touchPoint.point, (frictionForce - longitudinalForce) / rb.mass, Color.blue);
-            Debug.DrawRay(wheelData.touchPoint.point, longitudinalForce / rb.mass, Color.white);
+            Debug.DrawRay(wheelData.touchPoint.point, frictionForce, Color.red);
+            Debug.DrawRay(wheelData.touchPoint.point, (frictionForce - longitudinalForce), Color.blue);
+            Debug.DrawRay(wheelData.touchPoint.point, longitudinalForce, Color.white);
         }
 
         frictionForce -= longitudinalForce;
             
         // Apply resulting force
-        rb.AddForceAtPosition(frictionForce, wheelData.touchPoint.point);
+        rb.AddForceAtPosition(frictionForce, wheelData.touchPoint.point, ForceMode.Acceleration);
 
         // Engine force
         if (settings.IsPowered && Mathf.Abs(accelerationForceMagnitude) > 0.01f)
         {
             Vector3 accForcePoint = wheelData.touchPoint.point - (wsDownDirection * 0.2f);
             Vector3 engineForce = c_fwd * accelerationForceMagnitude / numberOfPoweredWheels / dt;
-            rb.AddForceAtPosition(engineForce, accForcePoint);
+            rb.AddForceAtPosition(engineForce, accForcePoint, ForceMode.Acceleration);
 
             if (debugDraw)
-                Debug.DrawRay(accForcePoint, engineForce / rb.mass, Color.green);
+                Debug.DrawRay(accForcePoint, engineForce, Color.green);
         }
     }
 
