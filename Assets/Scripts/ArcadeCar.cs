@@ -181,7 +181,7 @@ public class ArcadeCar : MonoBehaviour
 
     void Steering(float steeringWheel, float speed)
     {
-        float speedKph = Mathf.Abs(speed) * 3.6f;
+        speed = Mathf.Abs(speed);
         float steering;
         if (Mathf.Abs(steeringWheel) > SteeringDeadzone)
         {
@@ -197,7 +197,7 @@ public class ArcadeCar : MonoBehaviour
         float newSteerAngle = steerAngle + steering;
         float sgn = Mathf.Sign(newSteerAngle);
         float steerLimit = Mathf.Lerp(Settings.SlowSteerAngleLimit, Settings.FastSteerAngleLimit, 
-            Utilities.EasyCurve(speedKph / Settings.MaxSpeed, Settings.SlowFastSteerCurve));
+            Utilities.EasyCurve(speed / Settings.MaxSpeed, Settings.SlowFastSteerCurve));
         newSteerAngle = Mathf.Min(Math.Abs(newSteerAngle), steerLimit) * sgn;
         steerAngle = newSteerAngle;
     }
@@ -325,10 +325,9 @@ public class ArcadeCar : MonoBehaviour
     {
         Vector3 carDown = transform.TransformDirection(new Vector3(0.0f, -1.0f, 0.0f));
 
-        float speed = GetSpeed();
-        float speedKmH = Mathf.Abs(speed) * 3.6f;
+        float speed = Mathf.Abs(GetSpeed());
 
-        float downForceAmount = 1f - Utilities.EasyCurve(1f - speedKmH / Settings.MaxSpeed, Settings.DownForceIntensity);
+        float downForceAmount = 1f - Utilities.EasyCurve(1f - speed / Settings.MaxSpeed, Settings.DownForceIntensity);
 
         rb.AddForce(Settings.DownForce * downForceAmount * carDown, ForceMode.Acceleration);
     }
