@@ -169,10 +169,7 @@ public class ArcadeCar : MonoBehaviour
         float speed = GetSpeed();
         float dt = Time.fixedDeltaTime;
 
-        if (accelerator >= 0f)
-            return accelerator * Settings.Forward.GetAccelerationForceMagnitude(speed, dt);
-        else
-            return accelerator * Settings.Reverse.GetAccelerationForceMagnitude(-speed, dt);
+        return accelerator * Settings.Forward.GetAccelerationForceMagnitude(Mathf.Abs(speed), dt);
     }
 
     void Steering(float steeringWheel, float speed)
@@ -513,10 +510,13 @@ public class ArcadeCar : MonoBehaviour
         if (settings.IsPowered && isAccelerating)
         {
             Vector3 engineForce = c_fwd * accelerationForceMagnitude / numberOfPoweredWheels / dt;
-            longitudinalForce -= engineForce;
+            //longitudinalForce -= engineForce;
+
+            Vector3 pt = wheelData.touchPoint.point - wsDownDirection * 0.2f;
+            rb.AddForceAtPosition(engineForce, pt, ForceMode.Acceleration);
 
             if (debugDraw)
-                Debug.DrawRay(wheelData.touchPoint.point, engineForce, Color.green);
+                Debug.DrawRay(pt, engineForce, Color.green);
         }
 
         frictionForce -= longitudinalForce;
