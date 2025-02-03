@@ -7,7 +7,7 @@ PhysicMaterial:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Road
-  dynamicFriction: 1
+  dynamicFriction: 0.6
   staticFriction: 0.6
   bounciness: 0.85
   frictionCombine: 0

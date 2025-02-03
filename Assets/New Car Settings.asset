@@ -15,13 +15,15 @@ MonoBehaviour:
   CenterOfMass: {x: 0, y: -0.4, z: 0.38}
   MaxSpeed: 55
   Forward:
-    TopSpeed: 36
+    TopSpeed: 50
     Acceleration: 0.8
     Duration: 10
   Reverse:
     TopSpeed: 11
     Acceleration: 0.8
     Duration: 3
+  RollingOnLowFriction: 0.9999
+  RollingOnHighFriction: 0.99
   SteeringSmooth: 0.2
   SteerAngleLimitAtLowSpeed: 40
   SteerAngleLimitAtHighSpeed: 4
@@ -38,8 +40,7 @@ MonoBehaviour:
     IsPowered: 0
     Radius: 0.3
     LateralFriction: 0.6
-    RollingFriction: 0.005
-    BrakeForce: 8
+    BrakeForce: 4
     Stiffness: 10
     Damping: 2
     Restitution: 2
@@ -51,8 +52,7 @@ MonoBehaviour:
     IsPowered: 1
     Radius: 0.3
     LateralFriction: 0.6
-    RollingFriction: 0.005
-    BrakeForce: 2
+    BrakeForce: 1.5
     Stiffness: 6
     Damping: 2
     Restitution: 2

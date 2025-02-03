@@ -98,17 +98,13 @@ public class ArcadeCar : MonoBehaviour
     [Header("Axles")]
     public Axle Front, Rear;
 
-    [Header("Input")] // TODO: move me to external component
-    public bool controllable = true;
-
     [Header("Debug")]
     public bool debugDraw = true;
 
-    //////////////////////////////////////////////////////////////////////////////////////////////////////
-
+    [Header("Input")] // TODO: move me to external component
+    public bool controllable = true;
     float steerAngle;
     float steerAngleVelocity;
-
     float accelerator = 0f; // -1..1, -1 is reverse, 1 is forward
     float brake = 0f; // 0..1
 
@@ -141,6 +137,11 @@ public class ArcadeCar : MonoBehaviour
         
         TryGetComponent(out rb);
         rb.centerOfMass = Settings.CenterOfMass;
+
+        Debug.Assert(Mathf.Approximately(transform.lossyScale.x, 1f)
+            && Mathf.Approximately(transform.lossyScale.y, 1f)
+            && Mathf.Approximately(transform.lossyScale.z, 1f),
+            "No scaling allowed");
     }
 
     void OnValidate()
@@ -195,7 +196,7 @@ public class ArcadeCar : MonoBehaviour
             wheel = Input.GetAxis("Horizontal");
             if (Input.GetKey(KeyCode.R)) 
                 ResetToValidPosition();
-            isBrakeNow = Input.GetKey(KeyCode.RightControl) || Input.GetKey(KeyCode.LeftControl);
+            isBrakeNow = Input.GetKey(KeyCode.Space);
         }
 
         brake = 0f;
@@ -457,11 +458,11 @@ public class ArcadeCar : MonoBehaviour
         Vector3 wheelVelocity = rb.GetPointVelocity(wheelData.touchPoint.point);
 
         // Contact basis (can be different from wheel basis)
-        Vector3 c_up = wheelData.touchPoint.normal;
-        Vector3 c_fwd = Vector3.ProjectOnPlane(wsWheelRot * Vector3.forward, c_up);
+        Vector3 contactUp = wheelData.touchPoint.normal;
+        Vector3 contactForward = Vector3.ProjectOnPlane(wsWheelRot * Vector3.forward, contactUp);
 
         // Calculate sliding velocity (velocity without normal force)
-        Vector3 slideVelocity = Vector3.ProjectOnPlane(wheelVelocity, c_up);
+        Vector3 slideVelocity = Vector3.ProjectOnPlane(wheelVelocity, contactUp);
 
         // Calculate current sliding force
         Vector3 slidingForce = 1f / dt / totalWheelsCount * slideVelocity;
@@ -469,17 +470,13 @@ public class ArcadeCar : MonoBehaviour
         if (debugDraw)
             Debug.DrawRay(wheelData.touchPoint.point, slideVelocity, Color.red);
 
-        float wheelFriction = Mathf.Clamp01(settings.LateralFriction);
-        float groundFriction = wheelData.touchPoint.collider != null
-            && wheelData.touchPoint.collider.sharedMaterial != null
-            ? wheelData.touchPoint.collider.sharedMaterial.staticFriction : 0.6f;
-        float lateralFriction = 0.5f * (wheelFriction + groundFriction);
+        float lateralFriction = settings.LateralFriction;
 
         // Simulate perfect static friction
         Vector3 frictionForce = slidingForce * -lateralFriction;
 
         // Remove friction along roll-direction of wheel 
-        Vector3 longitudinalForce = Vector3.Dot(frictionForce, c_fwd) * c_fwd;
+        float longitudinalForce = Vector3.Dot(frictionForce, contactForward);
 
         bool isAccelerating = Mathf.Abs(accelerationForceMagnitude) > 0.01f;
         bool shouldPark = Mathf.Abs(GetSpeed()) < Settings.AutoParkThreshold && !isAccelerating;
@@ -487,30 +484,40 @@ public class ArcadeCar : MonoBehaviour
         // Apply braking force or rolling resistance force or nothing
         if (shouldPark || brake > 0f)
         {
-            float mag = longitudinalForce.magnitude;
+            float mag = Mathf.Abs(longitudinalForce);
             float force = mag > 0f ? Mathf.Clamp(settings.BrakeForce, 0.0f, mag) / mag : 0f;
             float intensity = shouldPark ? 1f : brake;
             longitudinalForce *= 1f - intensity * force;
         }
-        else if (!isAccelerating)
+
+        float groundFriction = 0.5f;
+        Collider collider = wheelData.touchPoint.collider;
+        if (collider != null)
         {
-            // Apply rolling-friction (automatic slow-down) only if player don't press the accelerator
-            float rollingK = 1.0f - Mathf.Clamp01(settings.RollingFriction);
-            longitudinalForce *= rollingK;
+            PhysicMaterial material = collider.sharedMaterial;
+            if (material != null)
+                groundFriction = material.dynamicFriction;
         }
 
+        // drag
+        longitudinalForce *= Mathf.Lerp(Settings.RollingOnLowFriction, Settings.RollingOnHighFriction, groundFriction);
+        
         if (debugDraw)
         {
             Debug.DrawRay(wheelData.touchPoint.point, frictionForce, Color.red);
-            Debug.DrawRay(wheelData.touchPoint.point, frictionForce - longitudinalForce, Color.blue);
-            Debug.DrawRay(wheelData.touchPoint.point, longitudinalForce, Color.white);
+            Debug.DrawRay(wheelData.touchPoint.point, frictionForce - longitudinalForce * contactForward, Color.blue);
+            Debug.DrawRay(wheelData.touchPoint.point, longitudinalForce * contactForward, Color.white);
         }
+
+        frictionForce -= longitudinalForce * contactForward;
+
+        // Apply resulting force
+        rb.AddForceAtPosition(frictionForce, wheelData.touchPoint.point, ForceMode.Acceleration);
 
         // Engine force
         if (settings.IsPowered && isAccelerating)
         {
-            Vector3 engineForce = c_fwd * accelerationForceMagnitude / numberOfPoweredWheels / dt;
-            //longitudinalForce -= engineForce;
+            Vector3 engineForce = contactForward * (accelerationForceMagnitude / numberOfPoweredWheels / dt);
 
             Vector3 pt = wheelData.touchPoint.point - wsDownDirection * 0.2f;
             rb.AddForceAtPosition(engineForce, pt, ForceMode.Acceleration);
@@ -518,11 +525,6 @@ public class ArcadeCar : MonoBehaviour
             if (debugDraw)
                 Debug.DrawRay(pt, engineForce, Color.green);
         }
-
-        frictionForce -= longitudinalForce;
-            
-        // Apply resulting force
-        rb.AddForceAtPosition(frictionForce, wheelData.touchPoint.point, ForceMode.Acceleration);
     }
 
     void CalculateAxleForces(in CarSettings.Axle settings, ref Axle axle, int totalWheelsCount, int numberOfPoweredWheels)
@@ -562,10 +564,6 @@ public class ArcadeCar : MonoBehaviour
 
     void CalculateAckermannSteering()
     {
-        Debug.Assert(Mathf.Approximately(transform.lossyScale.x, 1f)
-            && Mathf.Approximately(transform.lossyScale.y, 1f)
-            && Mathf.Approximately(transform.lossyScale.z, 1f));
-
         // Get turning circle radius for steering angle input
         float turningCircleRadius = Settings.AxleSeparation / Mathf.Tan(steerAngle * Mathf.Deg2Rad);
 

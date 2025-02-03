@@ -19,8 +19,6 @@ public class CarSettings : ScriptableObject
         [Tooltip("Tire laterial friction normalized to 0..1")]
         [Range(0.0f, 1.0f)] public float LateralFriction; // TODO use static friction from physics material
 
-        [Range(0.0f, 0.1f)] public float RollingFriction;
-
         [Tooltip("Brake force magnitude")]
         [Min(0.01f)] public float BrakeForce;
 
@@ -67,11 +65,16 @@ public class CarSettings : ScriptableObject
 
     public Vector3 CenterOfMass = new Vector3(0f, -0.48f, 0.38f);
 
-    [Tooltip("Only used as a reference for downforce and steering settings")]
+    [Tooltip("Only used as a reference for various settings")]
     [Speed] public float MaxSpeed = 200f / 3.6f; // used only for settings
 
     public Engine Forward = new Engine { TopSpeed = 130 / 3.6f, Acceleration = 0.8f, Duration = 10f };
     public Engine Reverse = new Engine { TopSpeed = 40 / 3.6f, Acceleration = 0.8f, Duration = 3f };
+
+    [Tooltip("Force multiplier when dynamic friction of ground is low")]
+    [Range(1.0f, 0.9f)] public float RollingOnLowFriction = 0.9999f;
+    [Tooltip("Force multiplier when dynamic friction of ground is high")]
+    [Range(1.0f, 0.9f)] public float RollingOnHighFriction = 0.99f;
 
     [Header("Steering")]
     public float SteeringSmooth = 0.2f;
@@ -81,7 +84,7 @@ public class CarSettings : ScriptableObject
 
     [Header("Other")]
     [Tooltip("Stabilization in flight (torque)")]
-    public float FlightStabilizationForce = -250.0f;
+    public float FlightStabilizationForce = -250;
 
     [Space]
     public float DownForceIntensity = 0.7f;
@@ -99,32 +102,30 @@ public class CarSettings : ScriptableObject
     public Axle Front = new Axle
     {
         Width = 1.55f,
-        Offset = new Vector2(1.51f, 0f),
+        Offset = new Vector2(1.51f, 0),
         IsPowered = false,
         Radius = 0.3f,
         LateralFriction = 0.6f,
-        RollingFriction = 0.005f,
-        BrakeForce = 14,
-        Stiffness = 6.5f,
-        Damping = 2f,
-        Restitution = 1f,
+        BrakeForce = 4,
+        Stiffness = 10,
+        Damping = 2,
+        Restitution = 2,
         RelaxedLength = 0.45f,
         AntiRollForce = 6.5f,
     };
     public Axle Rear = new Axle
     {
         Width = 1.55f,
-        Offset = new Vector2(-1.29f, 0f),
+        Offset = new Vector2(-1.29f, 0),
         IsPowered = true,
         Radius = 0.3f,
         LateralFriction = 0.6f,
-        RollingFriction = 0.005f,
-        BrakeForce = 2,
-        Stiffness = 4f,
-        Damping = 2f,
-        Restitution = 1f,
+        BrakeForce = 1.5f,
+        Stiffness = 6,
+        Damping = 2,
+        Restitution = 2,
         RelaxedLength = 0.45f,
-        AntiRollForce = 10000,
+        AntiRollForce = 6.5f,
     };
 
     [SerializeField, HideInInspector] public float AxleSeparation;
