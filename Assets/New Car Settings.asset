@@ -12,6 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63bc1d6671e589342825158958440aa8, type: 3}
   m_Name: New Car Settings
   m_EditorClassIdentifier: 
+  CollisionLayers:
+    serializedVersion: 2
+    m_Bits: 1
   CenterOfMass: {x: 0, y: -0.4, z: 0.38}
   MaxSpeed: 55
   Forward:

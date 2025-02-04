@@ -38,10 +38,6 @@ public class SpeedAttributeDrawer : UnityEditor.PropertyDrawer
 
 public class ArcadeCar : MonoBehaviour
 {
-    public LayerMask CollisionLayers;
-
-    const float wheelWidth = 0.085f;
-
     public struct WheelData
     {
         // is wheel touched ground or not ?
@@ -347,9 +343,9 @@ public class ArcadeCar : MonoBehaviour
         }
     }
 
-    bool RayCast(in Ray ray, float maxDistance, ref RaycastHit nearestHit)
+    bool RayCast(in Ray ray, float radius, float maxDistance, ref RaycastHit nearestHit)
     {
-        int numHits = Physics.RaycastNonAlloc(ray, wheelRayHits, maxDistance, CollisionLayers, QueryTriggerInteraction.Ignore);
+        int numHits = Physics.SphereCastNonAlloc(ray, radius, wheelRayHits, maxDistance, Settings.CollisionLayers, QueryTriggerInteraction.Ignore);
         if (numHits <= 0)
             return false;
         bool hasHit = false;
@@ -361,6 +357,7 @@ public class ArcadeCar : MonoBehaviour
                 hasHit = true;
             }
         }
+        nearestHit.distance += radius;
         return hasHit && nearestHit.distance <= maxDistance;
     }
 
@@ -372,29 +369,17 @@ public class ArcadeCar : MonoBehaviour
         Quaternion localWheelRot = Quaternion.Euler(new Vector3(0.0f, wheelData.yawRad * Mathf.Rad2Deg, 0.0f));
         Quaternion wsWheelRot = transform.rotation * localWheelRot;
 
-        // Wheel axle left direction
-        Vector3 wsAxleLeft = wsWheelRot * Vector3.left;
-
-        wheelData.isOnGround = false;
         wheelRay.direction = wsDownDirection;
 
         // Ray cast (better to use shape cast here, but Unity does not support shape casts)
         // TODO: replace with a single SphereCast
         float traceLen = settings.RelaxedLength + settings.Radius;
 
-        wheelRay.origin = wsAttachPoint + wsAxleLeft * wheelWidth;
-        RaycastHit s1 = new RaycastHit();
-        bool b1 = RayCast(wheelRay, traceLen, ref s1);
-
-        wheelRay.origin = wsAttachPoint - wsAxleLeft * wheelWidth;
-        RaycastHit s2 = new RaycastHit();
-        bool b2 = RayCast(wheelRay, traceLen, ref s2);
-
         wheelRay.origin = wsAttachPoint;
-        bool isCollided = RayCast(wheelRay, traceLen, ref wheelData.touchPoint);
+        wheelData.isOnGround = RayCast(wheelRay, settings.Radius, traceLen, ref wheelData.touchPoint);
 
         // No wheel contant found
-        if (!isCollided || !b1 || !b2)
+        if (!wheelData.isOnGround)
         {
             // wheel do not touch the ground (relaxing spring)
             float relaxSpeed = settings.Restitution;
@@ -735,8 +720,6 @@ public class ArcadeCar : MonoBehaviour
 
         // Draw wheel
         UnityEditor.Handles.DrawWireDisc(wsTo, wsAxle, axle.Radius);
-        UnityEditor.Handles.DrawWireDisc(wsTo + wsAxle * wheelWidth, wsAxle, axle.Radius);
-        UnityEditor.Handles.DrawWireDisc(wsTo - wsAxle * wheelWidth, wsAxle, axle.Radius);
     }
 
     void OnDrawGizmos()

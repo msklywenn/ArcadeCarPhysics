@@ -63,6 +63,8 @@ public class CarSettings : ScriptableObject
         }
     };
 
+    public LayerMask CollisionLayers;
+
     public Vector3 CenterOfMass = new Vector3(0f, -0.48f, 0.38f);
 
     [Tooltip("Only used as a reference for various settings")]
